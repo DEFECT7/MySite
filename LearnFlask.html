@@ -2609,7 +2609,8 @@ gunicorn -w 4 app:app
     </main>
 
     <!-- JavaScript لدالة نسخ الكود والشريط الجانبي -->
-   <script>
+ <script>
+    
     function copyCode(button, codeId) {
         const codeElement = document.getElementById(codeId);
         if (!codeElement) {
@@ -2619,7 +2620,6 @@ gunicorn -w 4 app:app
 
         const codeText = codeElement.innerText;
 
-        // انسخ إلى الحافظة
         navigator.clipboard.writeText(codeText).then(() => {
             const originalText = button.innerText;
             button.innerText = "✅ تم النسخ";
@@ -2634,10 +2634,13 @@ gunicorn -w 4 app:app
             alert("حدث خطأ أثناء النسخ، يرجى المحاولة مرة أخرى.");
         });
     }
-    document.addEventListener("DOMContentLoaded", function () {
-        const scrollLinks = document.querySelectorAll('a.scroll-link[href^="#"]');
 
-        scrollLinks.forEach(link => {
+    
+    document.addEventListener("DOMContentLoaded", function () {
+       
+        const sidebarLinks = document.querySelectorAll('#sidebar a[href^="#"]');
+
+        sidebarLinks.forEach(link => {
             link.addEventListener("click", function (e) {
                 e.preventDefault();
                 const targetId = this.getAttribute("href").substring(1);
@@ -2649,7 +2652,10 @@ gunicorn -w 4 app:app
                         block: "start"
                     });
                 }
+
             });
         });
     });
 </script>
+</body>
+</html>
