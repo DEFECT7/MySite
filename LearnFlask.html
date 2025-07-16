@@ -2609,8 +2609,7 @@ gunicorn -w 4 app:app
     </main>
 
     <!-- JavaScript لدالة نسخ الكود والشريط الجانبي -->
- <script>
-    
+<script>
     function copyCode(button, codeId) {
         const codeElement = document.getElementById(codeId);
         if (!codeElement) {
@@ -2635,9 +2634,13 @@ gunicorn -w 4 app:app
         });
     }
 
-    
+    function toggleSection(id) {
+        const section = document.getElementById(id);
+        if (!section) return;
+        section.classList.toggle('expanded');
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
-       
         const sidebarLinks = document.querySelectorAll('#sidebar a[href^="#"]');
 
         sidebarLinks.forEach(link => {
@@ -2652,7 +2655,6 @@ gunicorn -w 4 app:app
                         block: "start"
                     });
                 }
-
             });
         });
     });
