@@ -1,0 +1,2615 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل Flask الشامل: المستويات الثلاثة</title>
+    <!-- تضمين Tailwind CSS CDN لتصميم عصري ومتجاوب -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* استخدام خط Inter لجمالية القراءة */
+            background-color: #f8fafc; /* لون خلفية فاتح */
+            color: #334155; /* لون النص الأساسي */
+            display: flex; /* لتمكين الشريط الجانبي والمحتوى الرئيسي */
+            min-height: 100vh; /* لجعل الجسم يمتد على كامل ارتفاع الشاشة */
+        }
+        .sidebar {
+            width: 280px; /* عرض الشريط الجانبي */
+            background-color: #1e293b; /* خلفية داكنة للشريط الجانبي */
+            color: #e2e8f0; /* لون النص الفاتح */
+            padding: 1.5rem;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* ظل خفيف */
+            flex-shrink: 0; /* لمنع الشريط الجانبي من الانكماش */
+            overflow-y: auto; /* تمكين التمرير إذا كان المحتوى طويلاً */
+        }
+        .sidebar-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: #60a5fa; /* لون أزرق فاتح */
+        }
+        .sidebar-section-title {
+            font-size: 1.125rem; /* حجم خط أكبر قليلاً */
+            font-weight: 600;
+            padding: 0.75rem 0.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease;
+        }
+        .sidebar-section-title:hover {
+            background-color: #334155; /* لون خلفية عند التحويم */
+        }
+        .sidebar-section-title svg {
+            transition: transform 0.3s ease;
+        }
+        .sidebar-section-title.expanded svg {
+            transform: rotate(90deg); /* تدوير السهم عند التوسيع */
+        }
+        .sidebar-links {
+            list-style: none;
+            padding: 0;
+            margin-top: 0.5rem;
+            max-height: 0; /* لإخفاء القائمة افتراضياً */
+            overflow: hidden;
+            transition: max-height 0.3s ease-out; /* للانتقال السلس */
+        }
+        .sidebar-links.expanded {
+            max-height: 500px; /* قيمة كبيرة بما يكفي لإظهار كل المحتوى */
+            transition: max-height 0.5s ease-in;
+        }
+        .sidebar-links li a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: #cbd5e1; /* لون أفتح للروابط */
+            text-decoration: none;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            font-size: 0.9rem;
+        }
+        .sidebar-links li a:hover {
+            background-color: #475569; /* لون خلفية عند التحويم */
+            color: #f8fafc;
+        }
+
+        .main-content {
+            flex-grow: 1; /* لجعل المحتوى الرئيسي يملأ المساحة المتبقية */
+            padding: 2rem;
+            overflow-y: auto; /* تمكين التمرير للمحتوى الرئيسي */
+        }
+        .container {
+            max-width: 900px; /* تحديد أقصى عرض للمحتوى */
+            margin: 0 auto; /* توسيط المحتوى داخل main-content */
+        }
+        h1, h2, h3 {
+            color: #1e293b; /* لون العناوين أغمق */
+        }
+        pre {
+            background-color: #1e293b; /* خلفية داكنة للكود */
+            color: #e2e8f0; /* لون فاتح للنص داخل الكود */
+            padding: 1.25rem; /* مسافة داخلية */
+            border-radius: 0.5rem; /* حواف مستديرة */
+            overflow-x: auto; /* تمكين التمرير الأفقي للكود الطويل */
+            font-size: 0.9rem; /* حجم خط أصغر قليلاً للكود */
+            line-height: 1.5; /* تباعد الأسطر */
+        }
+        code {
+            background-color: #e2e8f0; /* خلفية فاتحة للكود المضمن */
+            color: #1e293b; /* لون داكن للنص داخل الكود المضمن */
+            padding: 0.2rem 0.4rem; /* مسافة داخلية صغيرة */
+            border-radius: 0.25rem; /* حواف مستديرة صغيرة */
+            font-weight: 600; /* خط سميك قليلاً */
+        }
+        .section-title {
+            border-bottom: 2px solid #cbd5e1; /* خط تحت العناوين الرئيسية */
+            padding-bottom: 0.5rem; /* مسافة تحت الخط */
+            margin-bottom: 1.5rem; /* مسافة أسفل العنوان */
+        }
+        .card {
+            background-color: #ffffff; /* خلفية بيضاء للبطاقات */
+            border-radius: 0.75rem; /* حواف مستديرة أكبر */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* ظل خفيف */
+            padding: 1.5rem; /* مسافة داخلية */
+            margin-bottom: 2rem; /* مسافة أسفل البطاقة */
+        }
+        li {
+            margin-bottom: 0.5rem; /* مسافة بين عناصر القائمة */
+        }
+        .code-block-container {
+            position: relative;
+            margin-bottom: 1.5rem; /* مسافة أسفل حاوية الكود */
+            padding-top: 2.5rem; /* مساحة للزر */
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.5rem; /* مسافة من الأعلى */
+            right: 0.5rem; /* مسافة من اليمين */
+            background-color: #3b82f6; /* أزرق Tailwind 500 */
+            color: white;
+            padding: 0.35rem 0.85rem; /* مسافة داخلية للزر */
+            border-radius: 0.375rem; /* حواف مستديرة */
+            font-size: 0.875rem; /* حجم خط صغير */
+            font-weight: 600; /* خط سميك */
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            z-index: 10; /* لضمان ظهور الزر فوق الكود */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* ظل للزر */
+        }
+        .copy-button:hover {
+            background-color: #2563eb; /* أزرق Tailwind 600 عند التحويم */
+            transform: translateY(-1px); /* تأثير رفع بسيط */
+        }
+        .copy-button:active {
+            background-color: #1d4ed8; /* أزرق Tailwind 700 عند الضغط */
+            transform: translateY(0);
+        }
+
+        /* رسائل الفلاش */
+        .flash-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+        .flash-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+        .flash-info { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+
+        /* لجعله متجاوبًا على الشاشات الصغيرة */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column; /* ترتيب العناصر عمودياً */
+            }
+            .sidebar {
+                width: 100%; /* عرض كامل للشريط الجانبي */
+                height: auto; /* ارتفاع تلقائي */
+                max-height: 200px; /* حد أقصى للارتفاع في وضع الطي */
+                overflow-y: auto;
+            }
+            .sidebar.collapsed {
+                max-height: 60px; /* ارتفاع الشريط الجانبي عند الطي */
+            }
+            .main-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- الشريط الجانبي -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">دليل Flask الشامل</div>
+        <nav>
+            <ul>
+                <li>
+                    <div class="sidebar-section-title" onclick="toggleSection('beginner-links')">
+                        <span>🔹 المستوى المبتدئ</span>
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <ul id="beginner-links" class="sidebar-links expanded">
+                        <li><a href="#what-is-flask">ما هو Flask ولماذا نستخدمه؟</a></li>
+                        <li><a href="#installation-setup">كيفية تنصيبه وإعداد بيئة العمل</a></li>
+                        <li><a href="#flask-app-route">شرح Flask() و @app.route()</a></li>
+                        <li><a href="#first-app">إنشاء أول تطبيق بسيط</a></li>
+                        <li><a href="#jinja2-templates">التعامل مع Jinja2 templates</a></li>
+                        <li><a href="#html-in-flask">استخدام HTML داخل Flask</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <div class="sidebar-section-title" onclick="toggleSection('intermediate-links')">
+                        <span>🔸 المستوى المتوسط</span>
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <ul id="intermediate-links" class="sidebar-links">
+                        <li><a href="#forms-http-methods">التعامل مع النماذج (Forms) وطرق HTTP</a></li>
+                        <li><a href="#static-files">التعامل مع ملفات static (صور، CSS…)</a></li>
+                        <li><a href="#file-uploads">التعامل مع الملفات والرفع (uploads)</a></li>
+                        <li><a href="#database-sqlalchemy">إنشاء قاعدة بيانات باستخدام SQLite و SQLAlchemy</a></li>
+                        <li><a href="#user-auth-sessions">تسجيل مستخدم، تسجيل دخول، إدارة الجلسات</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <div class="sidebar-section-title" onclick="toggleSection('advanced-links')">
+                        <span>🔺 المستوى المتقدم</span>
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <ul id="advanced-links" class="sidebar-links">
+                        <li><a href="#blueprints-project-org">تنظيم المشروع باستخدام Blueprints</a></li>
+                        <li><a href="#circular-imports">مشكلة Circular Imports وكيفية تجنبها</a></li>
+                        <li><a href="#apis-json-responses">APIs و JSON Responses</a></li>
+                        <li><a href="#jwt-token-auth">JWT و Token Authentication (مفهوم)</a></li>
+                        <li><a href="#oauth-login">تسجيل الدخول باستخدام OAuth (مفهوم)</a></li>
+                        <li><a href="#app-security">حماية التطبيق (CSRF، Rate Limiting، Login Required)</a></li>
+                        <li><a href="#deployment">رفع التطبيق على الإنترنت (Deployment)</a></li>
+                        <li><a href="#best-folder-structure">أفضل تنظيم للمجلدات والملفات</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+        <div class="container bg-white rounded-xl shadow-lg p-8 md:p-12">
+            <h1 class="text-4xl font-bold text-center mb-10 text-blue-700">دليل Flask الشامل: المستويات الثلاثة 🚀</h1>
+
+            <!-- قسم المقدمة -->
+            <div class="card" id="what-is-flask">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔹 ما هو Flask ولماذا نستخدمه؟</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    Flask هو إطار عمل (Web Framework) صغير وخفيف الوزن مكتوب بلغة بايثون، يُستخدم لبناء تطبيقات الويب. يُصنّف Flask على أنه "microframework" لأنه لا يتطلب أدوات أو مكتبات معينة، مما يمنح المطورين حرية أكبر في اختيار المكونات التي يرغبون في استخدامها.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">لماذا نستخدم Flask؟</h3>
+                <ul class="list-disc list-inside text-lg leading-relaxed">
+                    <li>
+                        <strong>المرونة والبساطة:</strong> Flask يوفر أساسيات بناء تطبيقات الويب دون فرض هياكل معقدة، مما يجعله مثالياً للمشاريع الصغيرة والمتوسطة، أو عندما تحتاج إلى تحكم كامل في كل جزء من تطبيقك.
+                    </li>
+                    <li>
+                        <strong>سهولة التعلم:</strong> بسبب بساطته، يُعتبر Flask نقطة انطلاق ممتازة للمبتدئين في تطوير الويب باستخدام بايثون. يمكنك بناء تطبيق ويب وظيفي في بضعة أسطر من الكود.
+                    </li>
+                    <li>
+                        <strong>المجتمع النشط:</strong> يمتلك Flask مجتمعاً كبيراً وداعماً، مما يعني وجود الكثير من الموارد، المكتبات الإضافية (Extensions)، والمساعدة المتاحة عبر الإنترنت.
+                    </li>
+                    <li>
+                        <strong>قابلية التوسع:</strong> على الرغم من كونه "microframework"، يمكن توسيع Flask بسهولة باستخدام الإضافات والمكتبات الخارجية لبناء تطبيقات كبيرة ومعقدة.
+                    </li>
+                    <li>
+                        <strong>مثالي للـ APIs:</strong> بفضل طبيعته الخفيفة، يُستخدم Flask بشكل شائع لبناء واجهات برمجة التطبيقات (APIs) التي تخدم تطبيقات الواجهة الأمامية (Frontend) أو تطبيقات الجوال.
+                    </li>
+                </ul>
+                <p class="mt-4 text-lg leading-relaxed">
+                    <strong>متى نستخدمه؟</strong> إذا كنت تبحث عن إطار عمل يسمح لك بالبدء بسرعة، يوفر لك مرونة عالية، أو تحتاج إلى بناء API سريع، فإن Flask هو خيار ممتاز.
+                </p>
+            </div>
+
+            <!-- قسم التنصيب والإعداد -->
+            <div class="card" id="installation-setup">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔹 كيفية تنصيبه وإعداد بيئة العمل</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    قبل البدء في كتابة كود Flask، من الضروري إعداد بيئة عمل مناسبة. أفضل طريقة للقيام بذلك هي استخدام البيئات الافتراضية (Virtual Environments).
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">ما هي البيئة الافتراضية ولماذا نستخدمها؟</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    البيئة الافتراضية هي بيئة معزولة لتثبيت حزم ومكتبات بايثون. إنها تضمن أن مشاريعك المختلفة لا تتعارض مع بعضها البعض من حيث إصدارات المكتبات. على سبيل المثال، إذا كان لديك مشروع يتطلب Flask 1.0 وآخر يتطلب Flask 2.0، فإن البيئات الافتراضية تسمح لك بتثبيت كلا الإصدارين دون مشاكل.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">خطوات التنصيب والإعداد:</h3>
+                <ol class="list-decimal list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        <strong>إنشاء مجلد للمشروع:</strong>
+                        <p class="mt-2 mb-2">ابدأ بإنشاء مجلد جديد لمشروعك. هذا سيساعد في تنظيم ملفاتك.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-1')">نسخ الكود</button>
+                            <pre><code id="code-1"># افتح الطرفية (Terminal/Command Prompt) وانتقل إلى المكان الذي تريد إنشاء المشروع فيه
+mkdir my_flask_app
+cd my_flask_app
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <code>mkdir my_flask_app</code>: ينشئ مجلدًا جديدًا باسم "my_flask_app".
+                            <br>
+                            <code>cd my_flask_app</code>: ينتقل إلى داخل هذا المجلد.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>إنشاء بيئة افتراضية:</strong>
+                        <p class="mt-2 mb-2">استخدم الوحدة النمطية <code>venv</code> المدمجة في بايثون لإنشاء بيئة افتراضية.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-2')">نسخ الكود</button>
+                            <pre><code id="code-2">python -m venv venv
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <code>python -m venv venv</code>: ينشئ بيئة افتراضية جديدة داخل مجلد المشروع ويسميها <code>venv</code>. يمكنك تسميتها بأي اسم آخر، لكن <code>venv</code> هو الشائع.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>تفعيل البيئة الافتراضية:</strong>
+                        <p class="mt-2 mb-2">يجب تفعيل البيئة الافتراضية قبل تثبيت أي حزم لضمان تثبيتها داخل هذه البيئة المعزولة.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-3')">نسخ الكود</button>
+                            <pre><code id="code-3"># لنظام التشغيل Windows:
+venv\Scripts\activate
+
+# لأنظمة التشغيل macOS/Linux:
+source venv/bin/activate
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            بعد التفعيل، ستلاحظ اسم البيئة الافتراضية (عادة <code>(venv)</code>) يظهر في بداية سطر الأوامر الخاص بك، مما يشير إلى أنك تعمل الآن داخل البيئة المعزولة.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>تنصيب Flask:</strong>
+                        <p class="mt-2 mb-2">الآن بعد تفعيل البيئة، يمكنك تثبيت Flask باستخدام مدير الحزم <code>pip</code>.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-4')">نسخ الكود</button>
+                            <pre><code id="code-4">pip install Flask
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <code>pip install Flask</code>: يقوم بتنزيل وتثبيت إطار عمل Flask وجميع تبعياته (مثل Jinja2 و Werkzeug) داخل البيئة الافتراضية النشطة.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>التحقق من التنصيب:</strong>
+                        <p class="mt-2 mb-2">يمكنك التحقق من أن Flask قد تم تثبيته بنجاح عن طريق تشغيل أمر <code>pip freeze</code>.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-5')">نسخ الكود</button>
+                            <pre><code id="code-5">pip freeze
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            سيظهر لك قائمة بجميع الحزم المثبتة في بيئتك الافتراضية، وسترى Flask ضمنها.
+                        </p>
+                    </li>
+                </ol>
+                <p class="mt-6 text-lg leading-relaxed">
+                    <strong>ملاحظة هامة:</strong> عند الانتهاء من العمل على مشروعك، يمكنك إلغاء تفعيل البيئة الافتراضية بكتابة <code>deactivate</code> في الطرفية.
+                </p>
+            </div>
+
+            <!-- قسم شرح Flask() و @app.route() -->
+            <div class="card" id="flask-app-route">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔹 شرح Flask() و @app.route()</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    هذان هما القلب النابض لأي تطبيق Flask. فهمهما ضروري لبناء أي وظيفة في تطبيقك.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. الكائن <code>Flask()</code>:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    عندما تبدأ تطبيق Flask، فإن أول شيء تفعله هو إنشاء كائن من الفئة <code>Flask</code>. هذا الكائن هو جوهر تطبيقك، وهو الذي سيتعامل مع كل شيء بدءًا من توجيه الطلبات (routing) وحتى إدارة الإعدادات.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-6')">نسخ الكود</button>
+                    <pre><code id="code-6">from flask import Flask
+
+# إنشاء كائن التطبيق Flask
+# __name__ هو اسم الوحدة النمطية (module) الحالية في بايثون.
+# Flask يستخدم هذا الاسم لتحديد موقع الموارد (مثل القوالب والملفات الثابتة).
+# على سبيل المثال، إذا كان ملفك اسمه app.py، فإن __name__ ستكون 'app'.
+app = Flask(__name__)
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>لماذا نكتبه؟</strong> هذا السطر هو نقطة البداية لتطبيق Flask الخاص بك. بدونه، لا يوجد تطبيق يمكن تشغيله.
+                    <br>
+                    <strong>وظيفته:</strong> يقوم بتهيئة تطبيق Flask، ويجهز كل ما يلزم للتعامل مع طلبات الويب.
+                    <br>
+                    <strong>أين يوضع؟</strong> عادةً ما يكون هذا السطر في بداية ملف Python الرئيسي لتطبيقك (مثلاً <code>app.py</code> أو <code>main.py</code>).
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. المزخرف <code>@app.route()</code>:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    المزخرف (Decorator) <code>@app.route()</code> هو ما يربط وظيفة بايثون مع مسار (URL) معين في تطبيق الويب الخاص بك. عندما يزور المستخدم هذا المسار في المتصفح، يتم تشغيل الوظيفة المرتبطة به.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-7')">نسخ الكود</button>
+                    <pre><code id="code-7">@app.route('/')
+def home():
+    # هذه الوظيفة ستُنفذ عندما يزور المستخدم المسار الجذر (الصفحة الرئيسية)
+    return "مرحباً بك في تطبيق Flask الأول!"
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>لماذا نكتبه؟</strong> لكي تخبر Flask أي دالة يجب تشغيلها عندما يطلب المستخدم مساراً معيناً (URL).
+                    <br>
+                    <strong>وظيفته:</strong> يقوم بتسجيل وظيفة <code>home()</code> كمعالج للمسار <code>'/'</code>. عندما يتلقى الخادم طلباً للمسار <code>'/'</code>، يستدعي Flask الدالة <code>home()</code>.
+                    <br>
+                    <strong>أين يوضع؟</strong> يُوضع مباشرة فوق تعريف الدالة التي تريد ربطها بمسار معين.
+                    <br>
+                    <strong>المنطق خلفه:</strong> تخيل أن تطبيقك هو مطعم. <code>@app.route('/')</code> يشبه لافتة تقول "هذا هو المدخل الرئيسي". عندما يأتي زبون إلى المدخل، فإن الدالة <code>home()</code> هي "الترحيب" الذي يتلقاه.
+                </p>
+                <p class="mt-4 text-lg leading-relaxed">
+                    يمكنك تحديد مسارات مختلفة:
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-8')">نسخ الكود</button>
+                    <pre><code id="code-8">@app.route('/about')
+def about():
+    # هذه الوظيفة ستُنفذ عندما يزور المستخدم المسار /about
+    return "هذه صفحة معلومات عنا."
+
+@app.route('/user/&lt;username&gt;')
+def show_user_profile(username):
+    # هذا المسار يقبل جزءاً متغيراً في الـ URL
+    # &lt;username&gt; سيتم تمريره كمتغير للدالة
+    return f"ملف المستخدم: {username}"
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>المسارات الديناميكية:</strong> <code>/user/&lt;username&gt;</code> يسمح لك بإنشاء مسارات تتغير بناءً على جزء من الـ URL. Flask يلتقط القيمة الموجودة في مكان <code>&lt;username&gt;</code> ويمررها كمتغير للدالة.
+                </p>
+            </div>
+
+            <!-- قسم إنشاء أول تطبيق بسيط -->
+            <div class="card" id="first-app">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔹 إنشاء أول تطبيق بسيط</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    الآن، دعنا نجمع كل ما تعلمناه لإنشاء أول تطبيق Flask بسيط.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">الخطوات:</h3>
+                <ol class="list-decimal list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        <strong>إنشاء ملف <code>app.py</code>:</strong>
+                        <p class="mt-2 mb-2">داخل مجلد مشروعك (<code>my_flask_app</code>)، أنشئ ملفًا جديدًا باسم <code>app.py</code>.</p>
+                    </li>
+                    <li>
+                        <strong>كتابة الكود التالي في <code>app.py</code>:</strong>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-9')">نسخ الكود</button>
+                            <pre><code id="code-9"># app.py
+
+# 1. استيراد كائن Flask من مكتبة flask
+from flask import Flask
+
+# 2. إنشاء كائن تطبيق Flask
+# __name__ يخبر Flask بمكان البحث عن الموارد مثل القوالب والملفات الثابتة.
+app = Flask(__name__)
+
+# 3. تعريف مسار (route) للصفحة الرئيسية
+# @app.route('/') هو مزخرف يربط الدالة 'home' بالمسار الجذر '/'
+# عندما يزور المستخدم '/' في المتصفح، سيتم تنفيذ هذه الدالة.
+@app.route('/')
+def home():
+    # 4. ترجع الدالة نصاً بسيطاً سيتم عرضه في المتصفح
+    # هذا النص هو استجابة HTTP للطلب.
+    return "مرحباً بك في تطبيق Flask الأول!"
+
+# 5. تشغيل التطبيق إذا كان هذا الملف هو الملف الرئيسي الذي يتم تنفيذه
+# if __name__ == '__main__': يضمن أن الكود داخل هذه الكتلة سيتم تشغيله فقط
+# عندما يتم تشغيل الملف مباشرة (وليس عند استيراده كوحدة نمطية).
+# app.run(debug=True) يبدأ خادم تطوير Flask.
+# debug=True: يفعّل وضع التصحيح، مما يوفر ميزات مفيدة مثل إعادة التحميل التلقائي
+# عند حفظ التغييرات وعرض رسائل خطأ مفصلة في المتصفح.
+if __name__ == '__main__':
+    app.run(debug=True)
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <strong>شرح كل سطر:</strong>
+                            <br>
+                            <code>from flask import Flask</code>: نستورد الفئة <code>Flask</code> التي نحتاجها لإنشاء تطبيقنا.
+                            <br>
+                            <code>app = Flask(__name__)</code>: ننشئ نسخة من تطبيق Flask. <code>__name__</code> هو متغير خاص في بايثون يمثل اسم الوحدة النمطية الحالية. Flask يستخدمه لتحديد موقع الموارد.
+                            <br>
+                            <code>@app.route('/')</code>: هذا المزخرف يخبر Flask أنه عندما يصل طلب HTTP إلى المسار الجذر (<code>/</code>)، يجب تشغيل الدالة التي تلي المزخرف مباشرة.
+                            <br>
+                            <code>def home():</code>: هذه هي الدالة التي ستُنفذ عند زيارة المسار <code>/</code>.
+                            <br>
+                            <code>return "مرحباً بك في تطبيق Flask الأول!"</code>: هذه الدالة ترجع سلسلة نصية. Flask سيأخذ هذه السلسلة ويعرضها كاستجابة HTTP في متصفح المستخدم.
+                            <br>
+                            <code>if __name__ == '__main__':</code>: هذا شرط قياسي في بايثون. يضمن أن الكود الموجود داخل هذه الكتلة (في حالتنا، <code>app.run()</code>) سيتم تنفيذه فقط عندما يتم تشغيل الملف <code>app.py</code> مباشرة، وليس عندما يتم استيراده كوحدة نمطية في ملف آخر.
+                            <br>
+                            <code>app.run(debug=True)</code>: هذا السطر يبدأ خادم تطوير Flask. <code>debug=True</code> يفعّل وضع التصحيح، وهو مفيد جداً أثناء التطوير لأنه:
+                            <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;- يعيد تحميل الخادم تلقائياً عند حفظ أي تغييرات في ملفاتك.
+                            <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;- يعرض رسائل خطأ مفصلة في المتصفح إذا حدث أي خطأ في تطبيقك، مما يسهل عملية التصحيح.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>تشغيل التطبيق:</strong>
+                        <p class="mt-2 mb-2">افتح الطرفية (Terminal/Command Prompt)، تأكد من أنك داخل مجلد مشروعك (<code>my_flask_app</code>) وأن البيئة الافتراضية مفعلة، ثم قم بتشغيل الملف:</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-10')">نسخ الكود</button>
+                            <pre><code id="code-10">python app.py
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            بعد تشغيل الأمر، سترى رسالة في الطرفية تشير إلى أن خادم Flask يعمل على عنوان معين، عادةً <code>http://127.0.0.1:5000/</code>.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>زيارة التطبيق في المتصفح:</strong>
+                        <p class="mt-2 mb-2">افتح متصفح الويب الخاص بك واذهب إلى العنوان المذكور (<code>http://127.0.0.1:5000/</code>). سترى النص "مرحباً بك في تطبيق Flask الأول!" معروضاً في المتصفح.</p>
+                    </li>
+                </ol>
+                <p class="mt-6 text-lg leading-relaxed">
+                    تهانينا! لقد قمت بتشغيل أول تطبيق Flask بنجاح.
+                </p>
+            </div>
+
+            <!-- قسم التعامل مع Jinja2 templates -->
+            <div class="card" id="jinja2-templates">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔹 التعامل مع Jinja2 templates</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    في التطبيق السابق، أرجعنا نصاً بسيطاً. لكن في تطبيقات الويب الحقيقية، نحتاج إلى عرض صفحات HTML ديناميكية. هنا يأتي دور <strong>Jinja2</strong>، وهو محرك قوالب (Template Engine) يستخدمه Flask افتراضياً.
+                </p>
+                <p class="mb-4 text-lg leading-relaxed">
+                    Jinja2 يسمح لك بكتابة ملفات HTML تحتوي على "أماكن" يتم ملؤها ببيانات من تطبيق Flask الخاص بك. هذا يفصل المنطق البرمجي (Python) عن عرض الواجهة (HTML).
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">الخطوات:</h3>
+                <ol class="list-decimal list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        <strong>إنشاء مجلد <code>templates</code>:</strong>
+                        <p class="mt-2 mb-2">داخل مجلد مشروعك (<code>my_flask_app</code>)، أنشئ مجلدًا جديدًا باسم <code>templates</code>. Flask يبحث تلقائياً عن ملفات القوالب داخل هذا المجلد.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-11')">نسخ الكود</button>
+                            <pre><code id="code-11"># تأكد أنك في مجلد my_flask_app
+mkdir templates
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <code>mkdir templates</code>: ينشئ المجلد الذي سيحتوي على جميع ملفات HTML التي ستستخدمها كقوالب.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>إنشاء ملف قالب <code>index.html</code>:</strong>
+                        <p class="mt-2 mb-2">داخل مجلد <code>templates</code>، أنشئ ملفًا جديدًا باسم <code>index.html</code>.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-12')">نسخ الكود</button>
+                            <pre><code id="code-12">&lt;!-- templates/index.html --&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;صفحة Flask الرئيسية&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
+            padding-top: 50px;
+        }
+        h1 {
+            color: #0056b3;
+        }
+        p {
+            font-size: 1.2em;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;مرحباً بك يا {{ name }}!&lt;/h1&gt;
+    &lt;p&gt;هذه صفحة HTML ديناميكية تم عرضها بواسطة Flask و Jinja2.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <strong>شرح قالب Jinja2:</strong>
+                            <br>
+                            <code>{{ name }}</code>: هذه هي صيغة Jinja2 لعرض متغير. عندما يقوم Flask بعرض هذا القالب، سيتم استبدال <code>{{ name }}</code> بالقيمة التي نمررها من دالة Flask. هذا هو جوهر القوالب الديناميكية.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>تعديل ملف <code>app.py</code> لاستخدام القالب:</strong>
+                        <p class="mt-2 mb-2">سنحتاج إلى استيراد الدالة <code>render_template</code> من Flask.</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-13')">نسخ الكود</button>
+                            <pre><code id="code-13"># app.py
+
+from flask import Flask, render_template # استيراد render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    # بدلاً من إرجاع نص، نستخدم render_template لعرض ملف HTML
+    # نمرر اسم الملف (index.html) والمتغيرات التي نريد استخدامها داخل القالب
+    # هنا، نمرر متغير 'name' بقيمة 'زائر كريم'
+    return render_template('index.html', name='زائر كريم')
+
+# يمكنك أيضاً إنشاء مسار آخر يمرر اسماً مختلفاً
+@app.route('/greet/&lt;user_name&gt;')
+def greet_user(user_name):
+    # نمرر المتغير user_name الذي تم التقاطه من الـ URL إلى القالب
+    return render_template('index.html', name=user_name)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <strong>شرح التغييرات في <code>app.py</code>:</strong>
+                            <br>
+                            <code>from flask import Flask, render_template</code>: استوردنا <code>render_template</code>، وهي الدالة المسؤولة عن تحميل وعرض القوالب.
+                            <br>
+                            <code>return render_template('index.html', name='زائر كريم')</code>:
+                            <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;- <code>render_template('index.html')</code>: يخبر Flask بالبحث عن ملف <code>index.html</code> داخل مجلد <code>templates</code> وتحميله.
+                            <br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;- <code>name='زائر كريم'</code>: يمرر متغيراً اسمه <code>name</code> بقيمة "زائر كريم" إلى القالب. هذا المتغير هو الذي سيحل محل <code>{{ name }}</code> في ملف <code>index.html</code>.
+                            <br>
+                            <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> يمكنك استخدام <code>render_template</code> لعرض أي صفحة HTML ديناميكية. على سبيل المثال، صفحة ملف شخصي للمستخدم، صفحة منتج، أو أي صفحة تحتاج إلى عرض بيانات مختلفة بناءً على سياق معين.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>تشغيل التطبيق وزيارته:</strong>
+                        <p class="mt-2 mb-2">أعد تشغيل التطبيق (إذا كان يعمل، أوقفه باستخدام <code>Ctrl+C</code> ثم أعد تشغيله):</p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-14')">نسخ الكود</button>
+                            <pre><code id="code-14">python app.py
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 mb-2">ثم قم بزيارة <code>http://127.0.0.1:5000/</code> في متصفحك. سترى الآن صفحة HTML معروضة، والنص "مرحباً بك يا زائر كريم!".</p>
+                        <p class="mt-2 mb-2">جرب أيضاً زيارة <code>http://127.0.0.1:5000/greet/علي</code>. سترى "مرحباً بك يا علي!"، مما يوضح كيفية عمل المتغيرات الديناميكية مع القوالب.</p>
+                    </li>
+                </ol>
+                <h3 class="text-2xl font-medium mt-6 mb-3">أساسيات Jinja2:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    Jinja2 ليس فقط لعرض المتغيرات. يمكنك أيضاً استخدام هياكل تحكم مثل الشروط والحلقات.
+                </p>
+                <ul class="list-disc list-inside text-lg leading-relaxed space-y-2">
+                    <li>
+                        <strong>عرض المتغيرات:</strong> <code>{{ variable_name }}</code>
+                    </li>
+                    <li>
+                        <strong>الشروط (If/Else):</strong>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-15')">نسخ الكود</button>
+                            <pre><code id="code-15">{% if user_logged_in %}
+    &lt;p&gt;أهلاً بك، {{ username }}!&lt;/p&gt;
+{% else %}
+    &lt;p&gt;الرجاء تسجيل الدخول.&lt;/p&gt;
+{% endif %}
+                            </code></pre>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>الحلقات التكرارية (For loop):</strong>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-16')">نسخ الكود</button>
+                            <pre><code id="code-16">&lt;ul&gt;
+    {% for item in items_list %}
+        &lt;li&gt;{{ item }}&lt;/li&gt;
+    {% endfor %}
+&lt;/ul&gt;
+                            </code></pre>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>التعليقات:</strong> <code>{# هذا تعليق في Jinja2 #}</code>
+                    </li>
+                </ul>
+                <p class="mt-4 text-lg leading-relaxed">
+                    <strong>لماذا نستخدم Jinja2؟</strong> يفصل Jinja2 منطق العرض عن منطق التطبيق. هذا يجعل الكود أكثر تنظيمًا وسهولة في الصيانة. تخيل أن لديك 10 صفحات ويب متشابهة في الهيكل ولكن تختلف في البيانات. بدلاً من كتابة 10 ملفات HTML منفصلة، يمكنك استخدام قالب واحد وتمرير البيانات المختلفة إليه.
+                </p>
+            </div>
+
+            <!-- قسم استخدام HTML داخل Flask -->
+            <div class="card" id="html-in-flask">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔹 استخدام HTML داخل Flask</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    كما رأينا في القسم السابق، الطريقة الأساسية لاستخدام HTML مع Flask هي عبر Jinja2 templates. Flask لا "ينشئ" HTML بنفسه، بل يقوم بتقديم (serving) ملفات HTML التي تقوم أنت بإنشائها.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. تنظيم ملفات HTML:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    كما ذكرنا، يجب وضع جميع ملفات HTML التي ستستخدمها كقوالب داخل مجلد <code>templates</code> في جذر مشروعك.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-17')">نسخ الكود</button>
+                    <pre><code id="code-17">my_flask_app/
+├── app.py
+└── templates/
+    ├── index.html
+    ├── about.html
+    └── contact.html
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>لماذا هذا التنظيم؟</strong> Flask مصمم للبحث عن القوالب في هذا المجلد المحدد. هذا يجعل تنظيم المشروع موحدًا ويسهل على Flask العثور على ملفاتك.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. إنشاء صفحات HTML متعددة:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    يمكنك إنشاء عدة ملفات HTML في مجلد <code>templates</code> وربط كل منها بمسار مختلف في تطبيق Flask الخاص بك.
+                </p>
+                <p class="mb-2"><strong>مثال:</strong></p>
+                <p class="mb-2">أنشئ ملف <code>about.html</code> داخل مجلد <code>templates</code>:</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-18')">نسخ الكود</button>
+                    <pre><code id="code-18">&lt;!-- templates/about.html --&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;عنّا&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e6f7ff;
+            color: #222;
+            text-align: center;
+            padding-top: 50px;
+        }
+        h1 {
+            color: #007bff;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;صفحة معلومات عنا&lt;/h1&gt;
+    &lt;p&gt;نحن فريق متخصص في تطوير تطبيقات الويب باستخدام Flask.&lt;/p&gt;
+    &lt;p&gt;&lt;a href="/"&gt;العودة إلى الصفحة الرئيسية&lt;/a&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                    </code></pre>
+                </div>
+                <p class="mb-2">ثم قم بتعديل ملف <code>app.py</code> لإضافة مسار جديد لصفحة "عنا":</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-19')">نسخ الكود</button>
+                    <pre><code id="code-19"># app.py
+
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html', name='زائر كريم')
+
+@app.route('/greet/&lt;user_name&gt;')
+def greet_user(user_name):
+    return render_template('index.html', name=user_name)
+
+# مسار جديد لصفحة "عنا"
+@app.route('/about')
+def about():
+    # نرجع قالب about.html
+    return render_template('about.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح:</strong> الآن، عندما يزور المستخدم <code>http://127.0.0.1:5000/about</code>، سيعرض Flask ملف <code>about.html</code>.
+                    <br>
+                    <strong>كيف نكتبه بالطريقة الصحيحة؟</strong> دائماً استخدم <code>render_template()</code> لتقديم ملفات HTML. هذا يضمن أن Flask يتعامل مع المسارات بشكل صحيح ويمكنه إدراج البيانات الديناميكية.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">3. الروابط بين الصفحات (Navigation):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    للتنقل بين الصفحات في تطبيق Flask الخاص بك، يمكنك ببساطة استخدام روابط HTML القياسية (<code>&lt;a href="..."&gt;</code>).
+                </p>
+                <p class="mb-2"><strong>مثال:</strong> أضف رابطاً لصفحة "عنا" في <code>index.html</code>:</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-20')">نسخ الكود</button>
+                    <pre><code id="code-20">&lt;!-- templates/index.html (جزء من الكود) --&gt;
+
+&lt;body&gt;
+    &lt;h1&gt;مرحباً بك يا {{ name }}!&lt;/h1&gt;
+    &lt;p&gt;هذه صفحة HTML ديناميكية تم عرضها بواسطة Flask و Jinja2.&lt;/p&gt;
+    &lt;p&gt;&lt;a href="/about"&gt;تعرف علينا أكثر&lt;/a&gt;&lt;/p&gt; &lt;!-- إضافة هذا السطر --&gt;
+&lt;/body&gt;
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>لماذا نستخدم روابط HTML؟</strong> لأن Flask هو خادم ويب، فهو يستجيب لطلبات HTTP. عندما ينقر المستخدم على رابط، يرسل المتصفح طلباً جديداً إلى الخادم (Flask)، والذي بدوره يعالج الطلب ويرجع الصفحة المناسبة.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">4. استخدام <code>url_for()</code> (موصى به):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    على الرغم من أن استخدام المسارات المباشرة (مثل <code>href="/about"</code>) يعمل، إلا أن Flask يوفر دالة أفضل لإنشاء الروابط وهي <code>url_for()</code>.
+                </p>
+                <p class="mb-4 text-lg leading-relaxed">
+                    <code>url_for()</code> تأخذ اسم الدالة التي تتعامل مع المسار كأول وسيطة، وإذا كان المسار ديناميكياً، تمرر القيم ككلمات مفتاحية.
+                </p>
+                <p class="mb-2"><strong>مثال:</strong></p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-21')">نسخ الكود</button>
+                    <pre><code id="code-21"># app.py
+
+from flask import Flask, render_template, url_for # استيراد url_for
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    # استخدام url_for في القوالب
+    return render_template('index.html', name='زائر كريم')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/greet/&lt;user_name&gt;')
+def greet_user(user_name):
+    return render_template('index.html', name=user_name)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+                    </code></pre>
+                </div>
+                <p class="mb-2">تعديل <code>index.html</code> و <code>about.html</code> لاستخدام <code>url_for</code>:</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-22')">نسخ الكود</button>
+                    <pre><code id="code-22">&lt;!-- templates/index.html (جزء من الكود) --&gt;
+
+&lt;body&gt;
+    &lt;h1&gt;مرحباً بك يا {{ name }}!&lt;/h1&gt;
+    &lt;p&gt;هذه صفحة HTML ديناميكية تم عرضها بواسطة Flask و Jinja2.&lt;/p&gt;
+    &lt;p&gt;&lt;a href="{{ url_for('about') }}"&gt;تعرف علينا أكثر&lt;/a&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;a href="{{ url_for('greet_user', user_name='أحمد') }}"&gt;سلم على أحمد&lt;/a&gt;&lt;/p&gt;
+&lt;/body&gt;
+                    </code></pre>
+                </div>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-23')">نسخ الكود</button>
+                    <pre><code id="code-23">&lt;!-- templates/about.html (جزء من الكود) --&gt;
+
+&lt;body&gt;
+    &lt;h1&gt;صفحة معلومات عنا&lt;/h1&gt;
+    &lt;p&gt;نحن فريق متخصص في تطوير تطبيقات الويب باستخدام Flask.&lt;/p&gt;
+    &lt;p&gt;&lt;a href="{{ url_for('home') }}"&gt;العودة إلى الصفحة الرئيسية&lt;/a&gt;&lt;/p&gt;
+&lt;/body&gt;
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>لماذا نستخدم <code>url_for()</code>؟</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong>المرونة:</strong> إذا قمت بتغيير مسار (URL) دالة ما في المستقبل (مثلاً، من <code>/about</code> إلى <code>/who-we-are</code>)، فلن تحتاج إلى تحديث جميع الروابط في ملفات HTML. <code>url_for()</code> سيتكفل بالأمر تلقائياً.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong>تجنب الأخطاء:</strong> يقلل من احتمالية حدوث أخطاء بسبب كتابة المسارات يدوياً.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong>المسارات الديناميكية:</strong> يسهل التعامل مع المسارات التي تحتوي على متغيرات (مثل <code>/greet/&lt;user_name&gt;</code>).
+                    <br>
+                    <strong>كيف نكتبه بالطريقة الصحيحة؟</strong> داخل قوالب Jinja2، استخدم <code>{{ url_for('function_name', param1=value1) }}</code>.
+                </p>
+            </div>
+
+            <h2 class="text-3xl font-bold text-center mb-10 text-orange-600 mt-12" id="intermediate-level-start">🔸 المستوى المتوسط: بناء تطبيقات أكثر تعقيداً 🛠️</h2>
+
+            <!-- قسم التعامل مع النماذج (Forms) وطرق HTTP -->
+            <div class="card" id="forms-http-methods">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔸 التعامل مع النماذج (Forms) وطرق HTTP</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    تطبيقات الويب التفاعلية تحتاج إلى جمع البيانات من المستخدمين، وهذا يتم عادةً عبر النماذج (Forms). فهم كيفية التعامل مع طرق HTTP (مثل GET و POST) وكيفية معالجة بيانات النموذج في Flask أمر أساسي.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. طرق HTTP: GET و POST</h3>
+                <ul class="list-disc list-inside text-lg leading-relaxed mb-4">
+                    <li>
+                        <strong>GET:</strong> تُستخدم لطلب بيانات من الخادم. عندما تزور صفحة ويب، فإن متصفحك يقوم بطلب GET. البيانات تُرسل في عنوان URL (مرئية).
+                    </li>
+                    <li>
+                        <strong>POST:</strong> تُستخدم لإرسال البيانات إلى الخادم لتغيير حالته (مثل حفظ بيانات جديدة، تسجيل دخول). البيانات تُرسل في جسم الطلب (غير مرئية في URL).
+                    </li>
+                </ul>
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. إنشاء نموذج HTML بسيط</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    لنبدأ بإنشاء نموذج تسجيل دخول بسيط في ملف قالب جديد <code>login.html</code> داخل مجلد <code>templates</code>.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-login-html')">نسخ الكود</button>
+                    <pre><code id="code-login-html">&lt;!-- templates/login.html --&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;تسجيل الدخول&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .login-container { background-color: white; padding: 2.5rem; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #333; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; text-align: right; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #555; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.375rem; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 1rem; margin-top: 1.5rem; transition: background-color 0.3s ease; }
+        button:hover { background-color: #0056b3; }
+        .flash-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+        .flash-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="login-container"&gt;
+        &lt;h1&gt;تسجيل الدخول&lt;/h1&gt;
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                &lt;ul class="list-none p-0"&gt;
+                {% for category, message in messages %}
+                    &lt;li class="{% if category == 'error' %}flash-error{% else %}flash-message{% endif %}"&gt;{{ message }}&lt;/li&gt;
+                {% endfor %}
+                &lt;/ul&gt;
+            {% endif %}
+        {% endwith %}
+        &lt;form method="POST" action="{{ url_for('login') }}"&gt;
+            &lt;div class="form-group"&gt;
+                &lt;label for="username"&gt;اسم المستخدم:&lt;/label&gt;
+                &lt;input type="text" id="username" name="username" required&gt;
+            &lt;/div&gt;
+            &lt;div class="form-group"&gt;
+                &lt;label for="password"&gt;كلمة المرور:&lt;/label&gt;
+                &lt;input type="password" id="password" name="password" required&gt;
+            &lt;/div&gt;
+            &lt;button type="submit"&gt;تسجيل الدخول&lt;/button&gt;
+        &lt;/form&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح النموذج:</strong>
+                    <br>
+                    <code>&lt;form method="POST" action="{{ url_for('login') }}"&gt;</code>:
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>method="POST"</code>: يحدد أن البيانات سترسل باستخدام طريقة POST (مثالي لبيانات حساسة مثل كلمات المرور).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>action="{{ url_for('login') }}"</code>: يحدد المسار في Flask الذي سيتعامل مع بيانات النموذج عند إرساله. هنا نستخدم <code>url_for</code> للإشارة إلى دالة <code>login</code> في Flask.
+                    <br>
+                    <code>&lt;input type="text" id="username" name="username" required&gt;</code>: حقل إدخال لاسم المستخدم. <code>name="username"</code> مهم جداً، فهو الاسم الذي ستستخدمه Flask للوصول إلى قيمة هذا الحقل.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">3. التعامل مع <code>request</code> و <code>redirect</code> و <code>flash</code></h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    سنقوم بتعديل <code>app.py</code> للتعامل مع هذا النموذج.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-app-forms')">نسخ الكود</button>
+                    <pre><code id="code-app-forms"># app.py
+
+from flask import Flask, render_template, url_for, request, redirect, flash, session
+import os # لاستخدام متغيّرات البيئة أو توليد مفتاح سري عشوائي
+from werkzeug.security import generate_password_hash, check_password_hash # لتشفير كلمات المرور
+
+app = Flask(__name__)
+# تعيين مفتاح سري للجلسات (ضروري لـ flash و session)
+# يجب أن يكون هذا المفتاح قوياً جداً ولا يتم مشاركته علناً.
+# في الإنتاج، يجب أن يتم تحميله من متغير بيئة.
+app.secret_key = os.urandom(24) # توليد مفتاح سري عشوائي (للتطوير فقط)
+
+# مسار الصفحة الرئيسية
+@app.route('/')
+def home():
+    # التحقق مما إذا كان المستخدم مسجلاً للدخول لعرض رسالة ترحيب مخصصة
+    if 'username' in session:
+        return render_template('index.html', name=session['username'])
+    return render_template('index.html', name='زائر كريم')
+
+# مسار صفحة "عنا"
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+# مسار ترحيب ديناميكي
+@app.route('/greet/&lt;user_name&gt;')
+def greet_user(user_name):
+    return render_template('index.html', name=user_name)
+
+# مسار عرض نموذج تسجيل الدخول ومعالجة بياناته
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # إذا كان الطلب من نوع POST، فهذا يعني أن النموذج قد تم إرساله
+    if request.method == 'POST':
+        username = request.form['username'] # الحصول على قيمة حقل 'username'
+        password = request.form['password'] # الحصول على قيمة حقل 'password'
+
+        # هنا، في تطبيق حقيقي، ستقوم بالتحقق من اسم المستخدم وكلمة المرور في قاعدة البيانات.
+        # لأغراض الشرح، سنستخدم بيانات وهمية.
+        # لنفترض أن اسم المستخدم الصحيح هو 'admin' وكلمة المرور 'password123'
+        # ونستخدم تشفير كلمة المرور
+        stored_password_hash = generate_password_hash('password123') # هذا يجب أن يكون مخزناً في قاعدة البيانات
+
+        if username == 'admin' and check_password_hash(stored_password_hash, password):
+            # إذا كانت بيانات الاعتماد صحيحة
+            session['username'] = username # تخزين اسم المستخدم في الجلسة
+            flash('تم تسجيل الدخول بنجاح!', 'success') # رسالة فلاش للنجاح
+            return redirect(url_for('home')) # إعادة توجيه المستخدم إلى الصفحة الرئيسية
+        else:
+            # إذا كانت بيانات الاعتماد غير صحيحة
+            flash('اسم المستخدم أو كلمة المرور غير صحيحة.', 'error') # رسالة فلاش للخطأ
+            return redirect(url_for('login')) # إعادة توجيه إلى صفحة تسجيل الدخول مرة أخرى
+
+    # إذا كان الطلب من نوع GET، فهذا يعني أن المستخدم يطلب عرض صفحة تسجيل الدخول
+    return render_template('login.html')
+
+# مسار تسجيل الخروج
+@app.route('/logout')
+def logout():
+    session.pop('username', None) # إزالة اسم المستخدم من الجلسة
+    flash('تم تسجيل الخروج بنجاح.', 'success')
+    return redirect(url_for('home'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح التغييرات في <code>app.py</code>:</strong>
+                    <br>
+                    <code>from flask import ..., request, redirect, flash, session</code>: استوردنا دوال وكائنات جديدة.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>request</code>: كائن يحتوي على جميع البيانات المتعلقة بالطلب الحالي (مثل بيانات النموذج، طرق HTTP).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>redirect</code>: دالة لإعادة توجيه المستخدم إلى مسار آخر.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>flash</code>: دالة لإرسال رسائل لمرة واحدة إلى المستخدم (تظهر بعد إعادة التوجيه).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>session</code>: كائن لتخزين بيانات خاصة بالمستخدم عبر طلبات متعددة (مثلاً، حالة تسجيل الدخول).
+                    <br>
+                    <code>app.secret_key = os.urandom(24)</code>: **مهم جداً!** يجب تعيين مفتاح سري لتطبيق Flask لاستخدام الجلسات (sessions) ورسائل الفلاش (flash messages). هذا المفتاح يُستخدم لتشفير بيانات الجلسة. في بيئة الإنتاج، يجب أن يكون هذا المفتاح قوياً جداً ويتم تحميله من مكان آمن (مثل متغير بيئة)، وليس كتابته مباشرة في الكود.
+                    <br>
+                    <code>@app.route('/login', methods=['GET', 'POST'])</code>: يخبر Flask أن هذه الدالة ستتعامل مع طلبات <code>/login</code> سواء كانت من نوع GET (لعرض النموذج) أو POST (لإرسال البيانات).
+                    <br>
+                    <code>if request.method == 'POST':</code>: يتحقق مما إذا كان الطلب الحالي هو POST.
+                    <br>
+                    <code>username = request.form['username']</code>: للوصول إلى البيانات المرسلة عبر نموذج POST، نستخدم <code>request.form</code> الذي يعمل كقاموس. <code>'username'</code> هو قيمة السمة <code>name</code> في حقل الإدخال HTML.
+                    <br>
+                    <code>flash('رسالة', 'فئة')</code>: تُستخدم لإضافة رسالة إلى قائمة الرسائل "المومضة" (flashed messages). هذه الرسائل ستكون متاحة في الطلب التالي (بعد إعادة التوجيه) ويمكن عرضها في القالب. الفئة (مثل 'success' أو 'error') تُستخدم لتنسيق الرسالة.
+                    <br>
+                    <code>return redirect(url_for('home'))</code>: بعد معالجة النموذج (مثلاً، تسجيل الدخول بنجاح)، من أفضل الممارسات إعادة توجيه المستخدم. هذا يمنع المستخدم من إرسال النموذج مرة أخرى عن طريق الخطأ إذا قام بتحديث الصفحة (مشكلة "Post/Redirect/Get").
+                    <br>
+                    <code>session['username'] = username</code>: لتخزين اسم المستخدم في الجلسة، مما يسمح لنا بمعرفة ما إذا كان المستخدم مسجلاً للدخول في طلبات لاحقة.
+                    <br>
+                    <code>session.pop('username', None)</code>: لإزالة اسم المستخدم من الجلسة عند تسجيل الخروج.
+                    <br>
+                    <code>generate_password_hash</code> و <code>check_password_hash</code>: من مكتبة <code>werkzeug.security</code> تُستخدم لتشفير كلمات المرور والتحقق منها بشكل آمن. **لا تقم أبداً بتخزين كلمات المرور كنص عادي في قاعدة البيانات!**
+                    <br>
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> هذا النمط هو أساس أي تفاعل مع المستخدم يتضمن إدخال بيانات: تسجيل الدخول، التسجيل، إضافة تعليق، تحديث ملف شخصي، إلخ.
+                </p>
+                <p class="mt-6 text-lg leading-relaxed">
+                    <strong>الآن، قم بتشغيل التطبيق (أو أعد تشغيله) وقم بزيارة <code>http://127.0.0.1:5000/login</code>. حاول تسجيل الدخول باستخدام اسم المستخدم <code>admin</code> وكلمة المرور <code>password123</code>. ستلاحظ رسائل الفلاش تظهر في أعلى الصفحة بعد كل محاولة.</strong>
+                </p>
+            </div>
+
+            <!-- قسم التعامل مع ملفات static (صور، CSS…) -->
+            <div class="card" id="static-files">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔸 التعامل مع ملفات static (صور، CSS…)</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    تطبيقات الويب الحديثة تعتمد بشكل كبير على الملفات الثابتة (Static Files) مثل أوراق الأنماط (CSS) لجعل الصفحات تبدو جيدة، وملفات JavaScript لإضافة التفاعل، والصور. Flask لديه طريقة مدمجة لتقديم هذه الملفات.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. تنظيم مجلد <code>static</code>:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    مثل مجلد <code>templates</code>، يبحث Flask تلقائياً عن الملفات الثابتة في مجلد يسمى <code>static</code> في جذر مشروعك. يمكنك إنشاء مجلدات فرعية داخل <code>static</code> لتنظيم ملفاتك بشكل أفضل (مثل <code>css</code>، <code>js</code>، <code>images</code>).
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-static-folder')">نسخ الكود</button>
+                    <pre><code id="code-static-folder">my_flask_app/
+├── app.py
+├── templates/
+│   ├── index.html
+│   ├── about.html
+│   └── login.html
+└── static/
+    ├── css/
+    │   └── style.css
+    ├── js/
+    │   └── script.js
+    └── images/
+        └── logo.png
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>لماذا هذا التنظيم؟</strong> هذا هو الترتيب القياسي الذي يتوقعه Flask. يسهل على Flask العثور على ملفاتك الثابتة ويجعل مشروعك منظماً.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. ربط الملفات الثابتة في Jinja2 templates باستخدام <code>url_for()</code>:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    لربط ملف CSS أو JavaScript أو صورة في قالب HTML، نستخدم الدالة <code>url_for()</code> مع الوسيطة <code>'static'</code> واسم الملف.
+                </p>
+                <p class="mb-2"><strong>مثال:</strong> لنقم بإنشاء ملف <code>static/css/style.css</code>:</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-style-css')">نسخ الكود</button>
+                    <pre><code id="code-style-css">/* static/css/style.css */
+body {
+    background-color: #e0f7fa; /* لون أزرق فاتح جداً */
+    color: #263238;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    padding: 30px;
+    max-width: 800px;
+    margin: 30px auto;
+}
+h1 {
+    color: #00796b; /* أخضر داكن */
+    text-align: center;
+    margin-bottom: 25px;
+}
+p {
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+.button-link {
+    display: inline-block;
+    background-color: #00bcd4; /* أزرق سماوي */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+}
+.button-link:hover {
+    background-color: #0097a7; /* أزرق سماوي أغمق */
+}
+                    </code></pre>
+                </div>
+                <p class="mb-2">الآن، قم بتعديل <code>index.html</code> (ويمكنك تطبيق نفس الفكرة على <code>about.html</code> و <code>login.html</code>) لربط ملف CSS هذا:</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-index-html-css')">نسخ الكود</button>
+                    <pre><code id="code-index-html-css">&lt;!-- templates/index.html (جزء من الكود) --&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;صفحة Flask الرئيسية&lt;/title&gt;
+    &lt;!-- ربط ملف CSS الثابت --&gt;
+    &lt;link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="container"&gt;
+        &lt;h1&gt;مرحباً بك يا {{ name }}!&lt;/h1&gt;
+        &lt;p&gt;هذه صفحة HTML ديناميكية تم عرضها بواسطة Flask و Jinja2.&lt;/p&gt;
+        &lt;p&gt;&lt;a href="{{ url_for('about') }}" class="button-link"&gt;تعرف علينا أكثر&lt;/a&gt;&lt;/p&gt;
+        &lt;p&gt;&lt;a href="{{ url_for('greet_user', user_name='أحمد') }}" class="button-link"&gt;سلم على أحمد&lt;/a&gt;&lt;/p&gt;
+        {% if 'username' in session %}
+            &lt;p&gt;&lt;a href="{{ url_for('logout') }}" class="button-link"&gt;تسجيل الخروج&lt;/a&gt;&lt;/p&gt;
+        {% else %}
+            &lt;p&gt;&lt;a href="{{ url_for('login') }}" class="button-link"&gt;تسجيل الدخول&lt;/a&gt;&lt;/p&gt;
+        {% endif %}
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح:</strong>
+                    <br>
+                    <code>&lt;link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"&gt;</code>:
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>url_for('static', ...)</code>: يخبر Flask بالبحث عن الملف في مجلد <code>static</code>.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>filename='css/style.css'</code>: يحدد المسار النسبي للملف داخل مجلد <code>static</code>.
+                    <br>
+                    <strong>لماذا نستخدم <code>url_for('static', ...)</code>؟</strong> مثل استخدام <code>url_for</code> للمسارات، هذا يضمن أن الروابط إلى ملفاتك الثابتة ستكون صحيحة دائماً، حتى لو قمت بتغيير إعدادات الخادم أو مسار التطبيق. يضيف Flask أيضاً رقم إصدار (cache-busting) إلى URL في وضع التصحيح لضمان تحميل أحدث نسخة من الملفات.
+                    <br>
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> هذه هي الطريقة القياسية لربط أي ملفات CSS، JavaScript، أو صور في قوالب Flask.
+                </p>
+                <p class="mt-6 text-lg leading-relaxed">
+                    <strong>بعد إضافة ملف <code>style.css</code> وتعديل <code>index.html</code>، أعد تشغيل تطبيقك وستلاحظ أن الصفحة الرئيسية أصبحت تستخدم الأنماط الجديدة.</strong>
+                </p>
+            </div>
+
+            <!-- قسم التعامل مع الملفات والرفع (uploads) -->
+            <div class="card" id="file-uploads">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔸 التعامل مع الملفات والرفع (uploads)</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    تطبيقات الويب غالباً ما تحتاج إلى السماح للمستخدمين برفع ملفات (مثل الصور، المستندات). Flask يجعل التعامل مع رفع الملفات سهلاً نسبياً.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. الإعدادات المطلوبة:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    سنحتاج إلى تحديد مجلد لحفظ الملفات المرفوعة وتعيين بعض الإعدادات الأخرى.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-app-uploads-config')">نسخ الكود</button>
+                    <pre><code id="code-app-uploads-config"># app.py (أضف هذا في بداية الملف بعد تعريف app = Flask(__name__))
+
+from flask import Flask, render_template, url_for, request, redirect, flash, session
+import os
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename # لاستيراد secure_filename
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+# إعدادات رفع الملفات
+UPLOAD_FOLDER = 'static/uploads' # المجلد الذي سيتم حفظ الملفات المرفوعة فيه
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} # الامتدادات المسموح بها
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # تحديد أقصى حجم للملف (16 ميجابايت)
+
+# دالة مساعدة للتحقق من امتداد الملف
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ... بقية الكود (routes) ...
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح الإعدادات:</strong>
+                    <br>
+                    <code>UPLOAD_FOLDER = 'static/uploads'</code>: نحدد مجلد <code>uploads</code> داخل مجلد <code>static</code> لحفظ الملفات. تأكد من إنشاء هذا المجلد يدوياً: <code>mkdir static/uploads</code>.
+                    <br>
+                    <code>ALLOWED_EXTENSIONS</code>: مجموعة من امتدادات الملفات المسموح بها. هذا مهم جداً للأمان لمنع رفع ملفات ضارة.
+                    <br>
+                    <code>app.config['UPLOAD_FOLDER']</code>: يخبر Flask بمكان حفظ الملفات المرفوعة.
+                    <br>
+                    <code>app.config['MAX_CONTENT_LENGTH']</code>: يحدد أقصى حجم للطلب (بايت)، مما يمنع المستخدمين من رفع ملفات كبيرة جداً قد تستهلك موارد الخادم.
+                    <br>
+                    <code>secure_filename</code>: دالة من <code>werkzeug.utils</code> تُستخدم لتنظيف اسم الملف المرفوع، وإزالة أي أحرف قد تسبب مشاكل أمنية أو مشاكل في نظام التشغيل.
+                    <br>
+                    <code>allowed_file(filename)</code>: دالة مساعدة نستخدمها للتحقق مما إذا كان امتداد الملف المرفوع مسموحاً به.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. إنشاء نموذج رفع الملفات:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    سننشئ صفحة جديدة <code>upload.html</code> في مجلد <code>templates</code>.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-upload-html')">نسخ الكود</button>
+                    <pre><code id="code-upload-html">&lt;!-- templates/upload.html --&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;رفع ملف&lt;/title&gt;
+    &lt;link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"&gt;
+    &lt;style&gt;
+        .upload-container { background-color: white; padding: 2.5rem; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 100%; max-width: 500px; text-align: center; margin: 50px auto; }
+        h1 { color: #333; margin-bottom: 1.5rem; }
+        input[type="file"] { margin-bottom: 1rem; }
+        button { background-color: #28a745; /* أخضر */ color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 1rem; margin-top: 1.5rem; transition: background-color 0.3s ease; }
+        button:hover { background-color: #218838; }
+        .flash-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+        .flash-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+        .uploaded-image { max-width: 100%; height: auto; margin-top: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="upload-container"&gt;
+        &lt;h1&gt;رفع ملف&lt;/h1&gt;
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                &lt;ul class="list-none p-0"&gt;
+                {% for category, message in messages %}
+                    &lt;li class="{% if category == 'error' %}flash-error{% else %}flash-message{% endif %}"&gt;{{ message }}&lt;/li&gt;
+                {% endfor %}
+                &lt;/ul&gt;
+            {% endif %}
+        {% endwith %}
+        &lt;form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data"&gt;
+            &lt;input type="file" name="file" required&gt;&lt;br&gt;
+            &lt;button type="submit"&gt;رفع الملف&lt;/button&gt;
+        &lt;/form&gt;
+
+        {% if filename %}
+            &lt;h2 class="text-xl font-semibold mt-6 mb-4"&gt;الملف المرفوع:&lt;/h2&gt;
+            &lt;img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="الملف المرفوع" class="uploaded-image"&gt;
+            &lt;p&gt;المسار: &lt;code&gt;/static/uploads/{{ filename }}&lt;/code&gt;&lt;/p&gt;
+        {% endif %}
+        &lt;p&gt;&lt;a href="{{ url_for('home') }}" class="button-link"&gt;العودة إلى الرئيسية&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح النموذج:</strong>
+                    <br>
+                    <code>enctype="multipart/form-data"</code>: هذا السمة ضرورية جداً لأي نموذج يقوم برفع ملفات.
+                    <br>
+                    <code>&lt;input type="file" name="file" required&gt;</code>: حقل إدخال الملف. <code>name="file"</code> هو الاسم الذي سنستخدمه في Flask للوصول إلى الملف.
+                    <br>
+                    <code>{% if filename %} ... &lt;img src="{{ url_for('static', filename='uploads/' + filename) }}" ...&gt; {% endif %}</code>: هذا الجزء يعرض الصورة المرفوعة بعد نجاح الرفع، باستخدام <code>url_for</code> للوصول إلى الملف الثابت.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">3. معالجة رفع الملفات في Flask:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    سنضيف مساراً جديداً في <code>app.py</code> للتعامل مع رفع الملفات.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-app-uploads-route')">نسخ الكود</button>
+                    <pre><code id="code-app-uploads-route"># app.py (أضف هذا المسار الجديد)
+
+# ... (الكود السابق، بما في ذلك إعدادات UPLOAD_FOLDER و ALLOWED_EXTENSIONS ودالة allowed_file) ...
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # التحقق مما إذا كان هناك جزء 'file' في الطلب
+        if 'file' not in request.files:
+            flash('لم يتم تحديد ملف.', 'error')
+            return redirect(request.url) # إعادة التوجيه إلى نفس الصفحة
+
+        file = request.files['file']
+
+        # إذا لم يقم المستخدم بتحديد ملف، يرسل المتصفح ملفاً فارغاً بدون اسم
+        if file.filename == '':
+            flash('لم يتم تحديد ملف.', 'error')
+            return redirect(request.url)
+
+        # التحقق من امتداد الملف وتأمين اسمه
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename) # تأمين اسم الملف
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)) # حفظ الملف
+            flash('تم رفع الملف بنجاح!', 'success')
+            # إعادة توجيه مع تمرير اسم الملف لعرضه في الصفحة
+            return render_template('upload.html', filename=filename)
+        else:
+            flash('نوع الملف غير مسموح به.', 'error')
+            return redirect(request.url)
+
+    # إذا كان الطلب GET، اعرض نموذج الرفع
+    return render_template('upload.html')
+
+# ... (بقية الكود) ...
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح معالجة الرفع:</strong>
+                    <br>
+                    <code>if 'file' not in request.files:</code>: <code>request.files</code> هو كائن شبيه بالقاموس يحتوي على الملفات المرفوعة. نتحقق مما إذا كان الحقل الذي اسمه <code>'file'</code> موجوداً.
+                    <br>
+                    <code>file = request.files['file']</code>: نحصل على كائن الملف المرفوع.
+                    <br>
+                    <code>if file.filename == '':</code>: يتحقق مما إذا كان المستخدم قد اختار ملفاً بالفعل.
+                    <br>
+                    <code>filename = secure_filename(file.filename)</code>: خطوة أمنية حاسمة لتنظيف اسم الملف.
+                    <br>
+                    <code>file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))</code>: يحفظ الملف المرفوع في المجلد المحدد. <code>os.path.join</code> يضمن بناء مسار صحيح بغض النظر عن نظام التشغيل.
+                    <br>
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> يمكنك استخدام هذه الوظيفة للسماح للمستخدمين برفع صور ملفاتهم الشخصية، أو مستندات، أو أي نوع آخر من الملفات التي يحتاجها تطبيقك.
+                </p>
+                <p class="mt-6 text-lg leading-relaxed">
+                    <strong>بعد إضافة هذا الكود وإنشاء مجلد <code>static/uploads</code>، أعد تشغيل تطبيقك وقم بزيارة <code>http://127.0.0.1:5000/upload</code>. حاول رفع بعض الصور.</strong>
+                </p>
+            </div>
+
+            <!-- قسم إنشاء قاعدة بيانات باستخدام SQLite واستخدام SQLAlchemy -->
+            <div class="card" id="database-sqlalchemy">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔸 إنشاء قاعدة بيانات باستخدام SQLite واستخدام SQLAlchemy</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    معظم تطبيقات الويب تحتاج إلى تخزين البيانات بشكل دائم. <strong>SQLite</strong> هي قاعدة بيانات خفيفة الوزن ومناسبة جداً للمشاريع الصغيرة والمتوسطة، حيث يتم تخزينها في ملف واحد. <strong>SQLAlchemy</strong> هي مكتبة قوية للتعامل مع قواعد البيانات في بايثون، وتوفر طبقة تجريد (ORM - Object Relational Mapper) تجعل التفاعل مع قاعدة البيانات أسهل بكثير.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. تنصيب Flask-SQLAlchemy:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    Flask-SQLAlchemy هي إضافة (Extension) لـ Flask تجعل دمج SQLAlchemy مع Flask سلساً.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-install-flask-sqlalchemy')">نسخ الكود</button>
+                    <pre><code id="code-install-flask-sqlalchemy">pip install Flask-SQLAlchemy
+                    </code></pre>
+                </div>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. إعداد قاعدة البيانات في <code>app.py</code>:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    سنقوم بتعديل <code>app.py</code> لإعداد قاعدة البيانات وتعريف نموذج المستخدم.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-app-db-config')">نسخ الكود</button>
+                    <pre><code id="code-app-db-config"># app.py (أضف هذا في بداية الملف)
+
+from flask import Flask, render_template, url_for, request, redirect, flash, session
+from flask_sqlalchemy import SQLAlchemy # استيراد SQLAlchemy
+import os
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+# إعدادات قاعدة البيانات
+# تحديد مسار ملف قاعدة بيانات SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+# إيقاف تتبع التعديلات (يُفضل في الإنتاج لتحسين الأداء)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app) # إنشاء كائن قاعدة البيانات
+
+# تعريف نموذج (Model) المستخدم
+# النموذج يمثل جدولاً في قاعدة البيانات
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True) # عمود المعرف الرئيسي (يتزايد تلقائياً)
+    username = db.Column(db.String(80), unique=True, nullable=False) # اسم المستخدم (فريد، لا يمكن أن يكون فارغاً)
+    email = db.Column(db.String(120), unique=True, nullable=False) # البريد الإلكتروني (فريد، لا يمكن أن يكون فارغاً)
+    password_hash = db.Column(db.String(128), nullable=False) # كلمة المرور المشفرة
+
+    # تمثيل نصي للكائن، مفيد عند الطباعة لأغراض التصحيح
+    def __repr__(self):
+        return f'&lt;User {self.username}&gt;'
+
+    # دالة لتعيين كلمة المرور وتشفيرها
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    # دالة للتحقق من كلمة المرور
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+# ... (بقية الكود، بما في ذلك إعدادات UPLOAD_FOLDER و ALLOWED_EXTENSIONS ودالة allowed_file) ...
+
+# ... (مسارات التطبيق) ...
+
+if __name__ == '__main__':
+    # إنشاء جداول قاعدة البيانات إذا لم تكن موجودة
+    # يجب أن يتم هذا مرة واحدة فقط عند تشغيل التطبيق لأول مرة أو عند تغيير النماذج
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح الإعدادات والنموذج:</strong>
+                    <br>
+                    <code>app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'</code>: يحدد أننا نستخدم قاعدة بيانات SQLite وأن ملف قاعدة البيانات سيسمى <code>site.db</code> وسيتم إنشاؤه في جذر المشروع.
+                    <br>
+                    <code>db = SQLAlchemy(app)</code>: ينشئ كائن SQLAlchemy ويربطه بتطبيق Flask الخاص بنا.
+                    <br>
+                    <code>class User(db.Model):</code>: هذا هو تعريف نموذج المستخدم. كل كلاس يرث من <code>db.Model</code> يمثل جدولاً في قاعدة البيانات.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>db.Column(...)</code>: يمثل عموداً في الجدول.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>db.Integer, primary_key=True</code>: عمود المعرف، وهو مفتاح أساسي ويتزايد تلقائياً.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>db.String(80), unique=True, nullable=False</code>: عمود نصي بطول أقصى 80 حرفاً، يجب أن يكون فريداً (لا يمكن لمستخدمين متعددين أن يكون لهم نفس اسم المستخدم)، ولا يمكن أن يكون فارغاً.
+                    <br>
+                    <code>set_password</code> و <code>check_password</code>: دوال مساعدة داخل نموذج المستخدم لتشفير كلمة المرور والتحقق منها.
+                    <br>
+                    <code>with app.app_context(): db.create_all()</code>: هذا السطر مهم جداً. يقوم بإنشاء جميع الجداول في قاعدة البيانات بناءً على النماذج التي قمت بتعريفها (في حالتنا، جدول <code>User</code>). يجب أن يتم تشغيله ضمن سياق التطبيق (<code>app_context</code>).
+                    <br>
+                    <strong>لماذا نستخدم ORM (SQLAlchemy)؟</strong> بدلاً من كتابة استعلامات SQL يدوياً، تسمح لك ORM بالتعامل مع قاعدة البيانات باستخدام كائنات بايثون. هذا يجعل الكود أكثر سهولة في القراءة والصيانة، ويقلل من الأخطاء.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">3. إنشاء جداول قاعدة البيانات:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    لإنشاء الجداول في قاعدة البيانات (ملف <code>site.db</code>)، تحتاج إلى تشغيل ملف <code>app.py</code>. السطر <code>db.create_all()</code> داخل <code>if __name__ == '__main__':</code> سيتكفل بذلك.
+                </p>
+                <p class="mb-4 text-lg leading-relaxed">
+                    <strong>ملاحظة:</strong> إذا قمت بتغيير النماذج (إضافة/حذف أعمدة)، فلن يقوم <code>db.create_all()</code> بتحديث الجداول الموجودة تلقائياً. ستحتاج إلى استخدام أداة ترحيل قواعد البيانات (مثل Flask-Migrate، وهو موضوع للمستوى المتقدم) أو حذف ملف <code>site.db</code> وإعادة تشغيل التطبيق لإنشائه من جديد (في بيئة التطوير فقط!).
+                </p>
+            </div>
+
+            <!-- قسم تسجيل مستخدم، تسجيل دخول، إدارة الجلسات -->
+            <div class="card" id="user-auth-sessions">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔸 تسجيل مستخدم، تسجيل دخول، إدارة الجلسات</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    الآن بعد أن أصبح لدينا قاعدة بيانات ونموذج مستخدم، يمكننا بناء وظائف تسجيل المستخدم وتسجيل الدخول والخروج بشكل كامل.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. نموذج التسجيل (<code>register.html</code>):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    أنشئ ملف <code>register.html</code> في مجلد <code>templates</code>.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-register-html')">نسخ الكود</button>
+                    <pre><code id="code-register-html">&lt;!-- templates/register.html --&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ar" dir="rtl"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;تسجيل حساب جديد&lt;/title&gt;
+    &lt;link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .register-container { background-color: white; padding: 2.5rem; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #333; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; text-align: right; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #555; }
+        input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 0.375rem; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 1rem; margin-top: 1.5rem; transition: background-color 0.3s ease; }
+        button:hover { background-color: #0056b3; }
+        .flash-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+        .flash-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; text-align: center; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="register-container"&gt;
+        &lt;h1&gt;تسجيل حساب جديد&lt;/h1&gt;
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                &lt;ul class="list-none p-0"&gt;
+                {% for category, message in messages %}
+                    &lt;li class="{% if category == 'error' %}flash-error{% else %}flash-message{% endif %}"&gt;{{ message }}&lt;/li&gt;
+                {% endfor %}
+                &lt;/ul&gt;
+            {% endif %}
+        {% endwith %}
+        &lt;form method="POST" action="{{ url_for('register') }}"&gt;
+            &lt;div class="form-group"&gt;
+                &lt;label for="username"&gt;اسم المستخدم:&lt;/label&gt;
+                &lt;input type="text" id="username" name="username" required&gt;
+            &lt;/div&gt;
+            &lt;div class="form-group"&gt;
+                &lt;label for="email"&gt;البريد الإلكتروني:&lt;/label&gt;
+                &lt;input type="email" id="email" name="email" required&gt;
+            &lt;/div&gt;
+            &lt;div class="form-group"&gt;
+                &lt;label for="password"&gt;كلمة المرور:&lt;/label&gt;
+                &lt;input type="password" id="password" name="password" required&gt;
+            &lt;/div&gt;
+            &lt;div class="form-group"&gt;
+                &lt;label for="confirm_password"&gt;تأكيد كلمة المرور:&lt;/label&gt;
+                &lt;input type="password" id="confirm_password" name="confirm_password" required&gt;
+            &lt;/div&gt;
+            &lt;button type="submit"&gt;تسجيل&lt;/button&gt;
+        &lt;/form&gt;
+        &lt;p class="mt-4"&gt;هل لديك حساب بالفعل؟ &lt;a href="{{ url_for('login') }}"&gt;تسجيل الدخول&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                    </code></pre>
+                </div>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. تعديل <code>app.py</code> لوظائف التسجيل والدخول والخروج:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    سنقوم بتعديل المسارات الحالية وإضافة مسار جديد للتسجيل، مع استخدام قاعدة البيانات.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-app-auth-full')">نسخ الكود</button>
+                    <pre><code id="code-app-auth-full"># app.py (النسخة الكاملة والمحدثة)
+
+from flask import Flask, render_template, url_for, request, redirect, flash, session
+from flask_sqlalchemy import SQLAlchemy
+import os
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from functools import wraps # لاستخدامها في المزخرف login_required
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24) # يجب أن يكون هذا المفتاح قوياً جداً في الإنتاج
+
+# إعدادات قاعدة البيانات
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# إعدادات رفع الملفات
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+# دالة مساعدة للتحقق من امتداد الملف
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# تعريف نموذج (Model) المستخدم
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+
+    def __repr__(self):
+        return f'&lt;User {self.username}&gt;'
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+# مزخرف مخصص لحماية المسارات (يتطلب تسجيل الدخول)
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.', 'info')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# مسار الصفحة الرئيسية
+@app.route('/')
+def home():
+    if 'user_id' in session: # نستخدم 'user_id' بدلاً من 'username' لتخزين معرف المستخدم
+        user = User.query.get(session['user_id']) # جلب المستخدم من قاعدة البيانات
+        if user:
+            return render_template('index.html', name=user.username)
+    return render_template('index.html', name='زائر كريم')
+
+# مسار صفحة "عنا"
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+# مسار ترحيب ديناميكي
+@app.route('/greet/&lt;user_name&gt;')
+def greet_user(user_name):
+    return render_template('index.html', name=user_name)
+
+# مسار تسجيل حساب جديد
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        # التحقق من تطابق كلمات المرور
+        if password != confirm_password:
+            flash('كلمتا المرور غير متطابقتين.', 'error')
+            return redirect(url_for('register'))
+
+        # التحقق مما إذا كان اسم المستخدم أو البريد الإلكتروني موجوداً بالفعل
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('اسم المستخدم هذا موجود بالفعل. الرجاء اختيار اسم آخر.', 'error')
+            return redirect(url_for('register'))
+
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            flash('البريد الإلكتروني هذا مسجل بالفعل.', 'error')
+            return redirect(url_for('register'))
+
+        # إنشاء مستخدم جديد
+        new_user = User(username=username, email=email)
+        new_user.set_password(password) # تشفير كلمة المرور وحفظها
+
+        db.session.add(new_user) # إضافة المستخدم إلى الجلسة
+        db.session.commit() # حفظ التغييرات في قاعدة البيانات
+
+        flash('تم تسجيل حسابك بنجاح! يمكنك الآن تسجيل الدخول.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+# مسار تسجيل الدخول
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'user_id' in session: # إذا كان المستخدم مسجلاً للدخول بالفعل
+        flash('أنت مسجل الدخول بالفعل.', 'info')
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first() # البحث عن المستخدم بالاسم
+
+        # التحقق من وجود المستخدم وصحة كلمة المرور
+        if user and user.check_password(password):
+            session['user_id'] = user.id # تخزين معرف المستخدم في الجلسة
+            flash('تم تسجيل الدخول بنجاح!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('اسم المستخدم أو كلمة المرور غير صحيحة.', 'error')
+            return redirect(url_for('login'))
+
+    return render_template('login.html')
+
+# مسار تسجيل الخروج
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None) # إزالة معرف المستخدم من الجلسة
+    flash('تم تسجيل الخروج بنجاح.', 'success')
+    return redirect(url_for('home'))
+
+# مسار رفع الملفات
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required # حماية هذا المسار: يتطلب تسجيل الدخول
+def upload_file():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('لم يتم تحديد ملف.', 'error')
+            return redirect(request.url)
+
+        file = request.files['file']
+
+        if file.filename == '':
+            flash('لم يتم تحديد ملف.', 'error')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            flash('تم رفع الملف بنجاح!', 'success')
+            return render_template('upload.html', filename=filename)
+        else:
+            flash('نوع الملف غير مسموح به.', 'error')
+            return redirect(request.url)
+
+    return render_template('upload.html')
+
+# مسار صفحة محمية تتطلب تسجيل الدخول
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    user = User.query.get(session['user_id'])
+    return render_template('dashboard.html', user=user)
+
+# مسار API بسيط لإرجاع بيانات المستخدمين كـ JSON
+@app.route('/api/users')
+def api_users():
+    users = User.query.all()
+    # تحويل كائنات المستخدمين إلى قائمة من القواميس لسهولة تحويلها إلى JSON
+    users_data = [{'id': user.id, 'username': user.username, 'email': user.email} for user in users]
+    from flask import jsonify # استيراد jsonify هنا لتجنب Circular Imports إذا كان هذا في ملف منفصل
+    return jsonify(users_data)
+
+if __name__ == '__main__':
+    # إنشاء جداول قاعدة البيانات إذا لم تكن موجودة
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح التغييرات في <code>app.py</code>:</strong>
+                    <br>
+                    <strong>مسار <code>/register</code>:</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يستقبل بيانات النموذج (اسم المستخدم، البريد الإلكتروني، كلمة المرور، تأكيد كلمة المرور).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يتحقق من تطابق كلمتي المرور.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يبحث في قاعدة البيانات (باستخدام <code>User.query.filter_by(...).first()</code>) للتأكد من أن اسم المستخدم والبريد الإلكتروني غير مسجلين بالفعل.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- إذا كانت البيانات صالحة، ينشئ كائن <code>User</code> جديد، ويقوم بتشفير كلمة المرور باستخدام <code>set_password()</code>.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>db.session.add(new_user)</code>: يضيف الكائن الجديد إلى جلسة قاعدة البيانات.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>db.session.commit()</code>: يحفظ التغييرات بشكل دائم في قاعدة البيانات.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يستخدم <code>flash</code> لإظهار رسائل النجاح أو الخطأ.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يعيد التوجيه إلى صفحة تسجيل الدخول بعد التسجيل الناجح.
+                    <br>
+                    <strong>مسار <code>/login</code>:</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يبحث عن المستخدم في قاعدة البيانات باستخدام <code>User.query.filter_by(username=username).first()</code>.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يتحقق من كلمة المرور باستخدام <code>user.check_password(password)</code>.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- إذا كانت بيانات الاعتماد صحيحة، يخزن <code>user.id</code> في <code>session['user_id']</code>. **لماذا <code>user.id</code> وليس <code>username</code>؟** تخزين معرف المستخدم (ID) في الجلسة هو ممارسة أمنية أفضل. إذا تغير اسم المستخدم لاحقاً، فلن يؤثر ذلك على جلسة المستخدم. كما أنه يقلل من حجم البيانات المخزنة في الجلسة.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- إذا كان المستخدم مسجلاً للدخول بالفعل (<code>'user_id' in session</code>)، يتم إعادة توجيهه مباشرة.
+                    <br>
+                    <strong>مسار <code>/logout</code>:</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يقوم بإزالة <code>'user_id'</code> من الجلسة باستخدام <code>session.pop('user_id', None)</code>.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يعرض رسالة فلاش ويُعيد التوجيه.
+                    <br>
+                    <strong>مزخرف <code>@login_required</code>:</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- هذا المزخرف يلتف حول دالة المسار (مثلاً <code>upload_file</code> أو <code>dashboard</code>).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- قبل تنفيذ الدالة الأصلية، يتحقق مما إذا كان <code>'user_id'</code> موجوداً في الجلسة.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- إذا لم يكن المستخدم مسجلاً للدخول، فإنه يعرض رسالة فلاش ويُعيد توجيه المستخدم إلى صفحة تسجيل الدخول.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>from functools import wraps</code>: ضروري عند إنشاء مزخرفات مخصصة للحفاظ على بيانات تعريف الدالة الأصلية.
+                    <br>
+                    <strong>مسار <code>/dashboard</code>:</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- هذا مسار جديد يوضح كيفية حماية الصفحات. فقط المستخدمون المسجلون للدخول يمكنهم الوصول إليه بفضل <code>@login_required</code>.
+                    <br>
+                    <strong>مسار <code>/api/users</code>:</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يوضح كيفية إنشاء نقطة نهاية API بسيطة.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>User.query.all()</code>: يسترجع جميع المستخدمين من قاعدة البيانات.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- يتم تحويل كائنات <code>User</code> إلى قائمة من القواميس يدوياً (يمكن استخدام مكتبات مثل Marshmallow لأتمتة ذلك في المشاريع الكبيرة).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>from flask import jsonify</code>: تستخدم لتحويل قاموس/قائمة بايثون إلى استجابة JSON.
+                    <br>
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> هذه هي الوظائف الأساسية لأي نظام مصادقة مستخدم في تطبيق ويب، تسمح للمستخدمين بإنشاء حسابات، تسجيل الدخول، والبقاء مسجلين للدخول عبر صفحات مختلفة. كما أن حماية المسارات وإنشاء واجهات API هي خطوات أساسية نحو بناء تطبيقات احترافية.
+                </p>
+                <p class="mt-6 text-lg leading-relaxed">
+                    <strong>الآن، قم بتشغيل التطبيق (أو أعد تشغيله).</strong>
+                    <br>
+                    <strong>تأكد من حذف ملف <code>site.db</code> إذا كان موجوداً من تجارب سابقة، أو إذا كنت قد غيرت نموذج <code>User</code>. عند تشغيل <code>app.py</code>، سيتم إنشاء ملف <code>site.db</code> جديد وجداول فارغة.</strong>
+                    <br>
+                    <strong>قم بزيارة <code>http://127.0.0.1:5000/register</code> لإنشاء حساب جديد. ثم حاول تسجيل الدخول من <code>http://127.0.0.1:5000/login</code>. جرب زيارة <code>/upload</code> أو <code>/dashboard</code> قبل تسجيل الدخول وبعده.</strong>
+                </p>
+            </div>
+
+            <h2 class="text-3xl font-bold text-center mb-10 text-red-600 mt-12" id="advanced-level-start">🔺 المستوى المتقدم: بناء تطبيقات احترافية 🚀</h2>
+
+            <!-- قسم تنظيم المشروع باستخدام Blueprints -->
+            <div class="card" id="blueprints-project-org">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 تنظيم المشروع باستخدام Blueprints</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    مع نمو تطبيقات Flask، يصبح ملف <code>app.py</code> كبيراً جداً ويصعب إدارته. هنا يأتي دور <strong>Blueprints</strong>. الـ Blueprint هو طريقة لتنظيم تطبيق Flask الخاص بك إلى مكونات أصغر وأكثر قابلية للإدارة. كل Blueprint يمكن أن يحتوي على مساراته الخاصة، قوالبه، وملفاته الثابتة.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">لماذا نستخدم Blueprints؟</h3>
+                <ul class="list-disc list-inside text-lg leading-relaxed mb-4">
+                    <li>
+                        <strong>النمطية (Modularity):</strong> تقسيم التطبيق إلى وحدات منطقية (مثل وحدة للمصادقة، وحدة للمدونة، وحدة للمنتجات).
+                    </li>
+                    <li>
+                        <strong>إعادة الاستخدام (Reusability):</strong> يمكن استخدام الـ Blueprints في تطبيقات Flask مختلفة.
+                    </li>
+                    <li>
+                        <strong>تجنب التعارض:</strong> كل Blueprint له مساحته الخاصة للأسماء (namespace)، مما يمنع تعارض أسماء الدوال والمسارات.
+                    </li>
+                </ul>
+                <h3 class="text-2xl font-medium mt-6 mb-3">مثال على استخدام Blueprints:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    لنقم بإنشاء Blueprint للمصادقة (Authentication) والذي سيحتوي على مسارات تسجيل الدخول والتسجيل والخروج.
+                </p>
+                <p class="mb-2"><strong>1. إنشاء مجلد <code>blueprints</code> وملف <code>auth.py</code> داخله:</strong></p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-blueprint-folder')">نسخ الكود</button>
+                    <pre><code id="code-blueprint-folder">my_flask_app/
+├── app.py
+├── templates/
+│   ├── ...
+└── blueprints/
+    └── auth.py
+                    </code></pre>
+                </div>
+                <p class="mb-2"><strong>2. نقل مسارات المصادقة إلى <code>blueprints/auth.py</code>:</strong></p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-auth-blueprint')">نسخ الكود</button>
+                    <pre><code id="code-auth-blueprint"># blueprints/auth.py
+
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
+# استيراد db و User من مكان مركزي لتجنب Circular Imports
+# (سنشرح هذا بالتفصيل في القسم التالي)
+from app import db, User # نفترض أن db و User تم تعريفهما في app.py مؤقتاً
+
+# إنشاء كائن Blueprint
+# 'auth' هو اسم الـ Blueprint
+# __name__ هو اسم الوحدة النمطية الحالية
+auth_bp = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
+
+# مزخرف مخصص لحماية المسارات (يتطلب تسجيل الدخول)
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.', 'info')
+            return redirect(url_for('auth.login')) # لاحظ 'auth.login'
+        return f(*args, **kwargs)
+    return decorated_function
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        if password != confirm_password:
+            flash('كلمتا المرور غير متطابقتين.', 'error')
+            return redirect(url_for('auth.register'))
+
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('اسم المستخدم هذا موجود بالفعل. الرجاء اختيار اسم آخر.', 'error')
+            return redirect(url_for('auth.register'))
+
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            flash('البريد الإلكتروني هذا مسجل بالفعل.', 'error')
+            return redirect(url_for('auth.register'))
+
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('تم تسجيل حسابك بنجاح! يمكنك الآن تسجيل الدخول.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('register.html')
+
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'user_id' in session:
+        flash('أنت مسجل الدخول بالفعل.', 'info')
+        return redirect(url_for('home')) # home ليس جزءاً من هذا الـ Blueprint
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+            flash('تم تسجيل الدخول بنجاح!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('اسم المستخدم أو كلمة المرور غير صحيحة.', 'error')
+            return redirect(url_for('auth.login'))
+
+    return render_template('login.html')
+
+@auth_bp.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    flash('تم تسجيل الخروج بنجاح.', 'success')
+    return redirect(url_for('home'))
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح:</strong>
+                    <br>
+                    <code>from flask import Blueprint, ...</code>: نستورد <code>Blueprint</code> لإنشاء الوحدة.
+                    <br>
+                    <code>auth_bp = Blueprint('auth', __name__, template_folder='templates', static_folder='static')</code>:
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>'auth'</code>: اسم الـ Blueprint. سيُستخدم في <code>url_for</code> (مثلاً <code>url_for('auth.login')</code>).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <code>template_folder='templates'</code> و <code>static_folder='static'</code>: يخبر الـ Blueprint بمكان البحث عن القوالب والملفات الثابتة الخاصة به. إذا كانت هذه الملفات في مجلدات فرعية داخل مجلد الـ Blueprint، يمكنك تحديدها هنا.
+                    <br>
+                    <code>@auth_bp.route(...)</code>: بدلاً من <code>@app.route</code>، نستخدم <code>@auth_bp.route</code> لربط المسارات بالـ Blueprint.
+                    <br>
+                    <code>url_for('auth.login')</code>: عند الإشارة إلى مسار داخل Blueprint، يجب أن تسبق اسم الدالة باسم الـ Blueprint (<code>blueprint_name.function_name</code>).
+                </p>
+                <p class="mb-2"><strong>3. تسجيل الـ Blueprint في <code>app.py</code>:</strong></p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-register-blueprint')">نسخ الكود</button>
+                    <pre><code id="code-register-blueprint"># app.py (جزء من الكود)
+
+# ... (الاستيرادات والإعدادات السابقة) ...
+
+# استيراد الـ Blueprint
+from blueprints.auth import auth_bp
+
+app = Flask(__name__)
+# ... (بقية إعدادات app) ...
+
+# تسجيل الـ Blueprint
+app.register_blueprint(auth_bp)
+
+# ... (بقية مسارات التطبيق الرئيسية) ...
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح:</strong> <code>app.register_blueprint(auth_bp)</code> يربط الـ Blueprint بتطبيق Flask الرئيسي. يمكنك أيضاً تحديد <code>url_prefix</code> هنا، مثلاً <code>app.register_blueprint(auth_bp, url_prefix='/auth')</code>، مما سيجعل جميع مسارات هذا الـ Blueprint تبدأ بـ <code>/auth</code> (مثلاً <code>/auth/login</code>).
+                    <br>
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> استخدام Blueprints يجعل مشروعك منظماً، سهل التوسع، ويسهل على فريق العمل تقسيم المهام.
+                </p>
+            </div>
+
+            <!-- قسم مشكلة Circular Imports وكيفية تجنبها -->
+            <div class="card" id="circular-imports">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 مشكلة Circular Imports وكيفية تجنبها</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    تحدث مشكلة "Circular Import" (الاستيراد الدائري) عندما يحاول ملفان أو أكثر استيراد بعضهما البعض. في تطبيقات Flask الكبيرة، خاصة عند استخدام Blueprints أو تقسيم الكود إلى وحدات، يمكن أن تحدث هذه المشكلة بسهولة.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">مثال على المشكلة:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    تخيل أن لديك <code>app.py</code> و <code>blueprints/auth.py</code>.
+                </p>
+                <p class="mb-2">إذا كان <code>app.py</code> يحتوي على:</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-circular-import-app')">نسخ الكود</button>
+                    <pre><code id="code-circular-import-app"># app.py
+from flask import Flask
+from blueprints.auth import auth_bp # يستورد auth_bp
+
+app = Flask(__name__)
+app.register_blueprint(auth_bp)
+# ...
+                    </code></pre>
+                </div>
+                <p class="mb-2">و <code>blueprints/auth.py</code> يحتوي على:</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-circular-import-auth')">نسخ الكود</button>
+                    <pre><code id="code-circular-import-auth"># blueprints/auth.py
+from flask import Blueprint
+from app import app # يستورد app من app.py
+
+auth_bp = Blueprint('auth', __name__)
+@auth_bp.route('/login')
+def login():
+    # يستخدم app هنا
+    return 'Login page'
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    هذا سيؤدي إلى استيراد دائري: <code>app.py</code> يستورد <code>auth.py</code>، و <code>auth.py</code> يستورد <code>app.py</code>، مما يخلق حلقة لا نهائية ويسبب خطأ.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">كيفية تجنبها:</h3>
+                <ul class="list-disc list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        <strong>الاستيراد عند الحاجة (Import at the bottom):</strong> قم بتأجيل الاستيراد حتى اللحظة التي تحتاج فيها إلى الكائن. هذا شائع في Flask خاصة عند استيراد المسارات داخل ملفات Blueprints.
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-circular-import-solution-1')">نسخ الكود</button>
+                            <pre><code id="code-circular-import-solution-1"># blueprints/auth.py
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
+
+auth_bp = Blueprint('auth', __name__, template_folder='templates', static_folder='static')
+
+# استيراد db و User هنا (أو في دالة المسار) بدلاً من الأعلى
+# هذا يضمن أن app و db تم تهيئتهما بالكامل قبل استخدامهما هنا
+from app import db, User # هذا هو الحل الذي استخدمناه في الكود أعلاه
+
+# ... بقية المسارات ...
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <strong>المنطق:</strong> بدلاً من استيراد <code>db</code> و <code>User</code> في أعلى ملف <code>auth.py</code> (حيث قد لا يكون <code>app</code> قد تم تهيئته بالكامل بعد)، نقوم باستيرادهما بعد تهيئة الـ Blueprint نفسه. هذا يقطع الحلقة الدائرية.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>استخدام Factory Functions (موصى به للمشاريع الكبيرة):</strong> بدلاً من إنشاء كائن <code>app</code> مباشرة، تقوم بإنشاء دالة مصنع (factory function) تُنشئ التطبيق وتُهيئ الإضافات والـ Blueprints.
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-circular-import-solution-2')">نسخ الكود</button>
+                            <pre><code id="code-circular-import-solution-2"># project_name/__init__.py (بدلاً من app.py)
+
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+import os
+
+db = SQLAlchemy() # تهيئة db بدون ربطه بالتطبيق بعد
+
+def create_app():
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = os.urandom(24)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    db.init_app(app) # ربط db بالتطبيق هنا
+
+    from .blueprints.auth import auth_bp
+    app.register_blueprint(auth_bp)
+
+    # يمكنك تعريف المسارات العامة هنا أو في Blueprint خاص بها
+    @app.route('/')
+    def home():
+        return 'Home page'
+
+    return app
+
+# blueprints/auth.py
+from flask import Blueprint, ...
+from project_name import db, User # الآن يمكن استيراد db و User بأمان
+
+auth_bp = Blueprint('auth', __name__)
+# ... مسارات المصادقة ...
+
+# run.py (لتشغيل التطبيق)
+from project_name import create_app, db
+from project_name.models import User # استيراد النماذج لـ db.create_all()
+
+app = create_app()
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <strong>المنطق:</strong> في هذا النمط، لا يتم إنشاء كائن <code>app</code> إلا عند استدعاء <code>create_app()</code>. هذا يحل مشكلة الاستيراد الدائري لأن <code>db</code> يتم تهيئته بشكل منفصل ثم يُربط بالتطبيق لاحقاً، وتُستورد الـ Blueprints بعد إنشاء التطبيق. هذا هو النمط الموصى به للمشاريع الكبيرة.
+                        </p>
+                    </li>
+                    <li>
+                        <strong>استخدام <code>current_app</code> (للوصول إلى كائن التطبيق داخل الـ Blueprints):</strong>
+                        <p class="mb-4 text-lg leading-relaxed">
+                            إذا كنت تحتاج إلى الوصول إلى كائن التطبيق (<code>app</code>) داخل Blueprint، استخدم <code>current_app</code> بدلاً من استيراد <code>app</code> مباشرة.
+                        </p>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-circular-import-solution-3')">نسخ الكود</button>
+                            <pre><code id="code-circular-import-solution-3"># blueprints/some_blueprint.py
+from flask import Blueprint, current_app
+
+some_bp = Blueprint('some_bp', __name__)
+
+@some_bp.route('/config')
+def get_config():
+    # الوصول إلى إعدادات التطبيق عبر current_app
+    debug_mode = current_app.config['DEBUG']
+    return f"Debug mode is: {debug_mode}"
+                            </code></pre>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <strong>المنطق:</strong> <code>current_app</code> هو كائن وكيل (proxy) يشير إلى كائن التطبيق النشط في سياق الطلب. لا تحتاج إلى استيراد <code>app</code> مباشرة، مما يكسر أي استيراد دائري محتمل.
+                        </p>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- قسم APIs و JSON Responses -->
+            <div class="card" id="apis-json-responses">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 APIs و JSON Responses</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    واجهات برمجة التطبيقات (APIs) هي مجموعة من القواعد التي تسمح للتطبيقات المختلفة بالتواصل مع بعضها البعض. في تطوير الويب، غالباً ما تُستخدم APIs لتقديم البيانات بتنسيق <strong>JSON</strong> (JavaScript Object Notation) لتطبيقات الواجهة الأمامية (مثل React, Vue) أو تطبيقات الجوال.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">لماذا نستخدم APIs و JSON؟</h3>
+                <ul class="list-disc list-inside text-lg leading-relaxed mb-4">
+                    <li>
+                        <strong>فصل الواجهة الأمامية عن الخلفية:</strong> يسمح بتطوير الواجهة الأمامية والخلفية بشكل مستقل.
+                    </li>
+                    <li>
+                        <strong>دعم تطبيقات متعددة:</strong> يمكن لـ API واحد أن يخدم موقع ويب، تطبيق جوال، وتطبيقات طرف ثالث.
+                    </li>
+                    <li>
+                        <strong>تنسيق بيانات موحد:</strong> JSON هو تنسيق بيانات خفيف الوزن وسهل القراءة والكتابة، ومدعوم على نطاق واسع.
+                    </li>
+                </ul>
+                <h3 class="text-2xl font-medium mt-6 mb-3">إنشاء نقطة نهاية API بسيطة:</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    في Flask، يمكنك بسهولة إرجاع استجابات JSON باستخدام الدالة <code>jsonify</code>.
+                </p>
+                <p class="mb-2"><strong>مثال:</strong> لنقم بإنشاء نقطة نهاية API تُرجع قائمة بجميع المستخدمين في قاعدة البيانات.</p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-api-users')">نسخ الكود</button>
+                    <pre><code id="code-api-users"># app.py (أضف هذا المسار الجديد)
+
+from flask import Flask, render_template, url_for, request, redirect, flash, session, jsonify # استيراد jsonify
+# ... بقية الاستيرادات والإعدادات ...
+
+# ... تعريف نموذج User و db ...
+
+@app.route('/api/users')
+def api_users():
+    # جلب جميع المستخدمين من قاعدة البيانات
+    users = User.query.all()
+    # تحويل كائنات المستخدمين إلى قائمة من القواميس
+    # هذا ضروري لأن jsonify لا يمكنها تحويل كائنات SQLAlchemy مباشرة
+    users_data = []
+    for user in users:
+        users_data.append({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email
+        })
+    # إرجاع البيانات كاستجابة JSON
+    return jsonify(users_data)
+
+# ... بقية المسارات ...
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح:</strong>
+                    <br>
+                    <code>from flask import ..., jsonify</code>: نستورد الدالة <code>jsonify</code>.
+                    <br>
+                    <code>users = User.query.all()</code>: يسترجع جميع كائنات المستخدمين من جدول <code>User</code>.
+                    <br>
+                    <code>users_data = [] ... for user in users: users_data.append(...)</code>: نقوم بإنشاء قائمة من القواميس، حيث يمثل كل قاموس مستخدماً واحداً. هذا التحويل ضروري لأن <code>jsonify</code> تعمل بشكل أفضل مع الأنواع الأساسية في بايثون (قواميس، قوائم، سلاسل، أرقام، منطقية).
+                    <br>
+                    <code>return jsonify(users_data)</code>: تحول قائمة القواميس إلى استجابة JSON مع تعيين رأس <code>Content-Type: application/json</code> تلقائياً.
+                    <br>
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> يمكنك استخدام هذه النقطة النهائية (endpoint) من تطبيق JavaScript في الواجهة الأمامية (باستخدام <code>fetch</code> أو Axios) لجلب بيانات المستخدمين وعرضها ديناميكياً دون الحاجة إلى إعادة تحميل الصفحة بأكملها.
+                </p>
+                <p class="mt-6 text-lg leading-relaxed">
+                    <strong>قم بتشغيل التطبيق (أو أعد تشغيله) ثم قم بزيارة <code>http://127.0.0.1:5000/api/users</code> في متصفحك. سترى البيانات بتنسيق JSON.</strong>
+                </p>
+            </div>
+
+            <!-- قسم JWT و Token Authentication -->
+            <div class="card" id="jwt-token-auth">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 JWT و Token Authentication (مفهوم)</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    عند بناء APIs، غالباً ما نحتاج إلى طريقة لمصادقة الطلبات القادمة من تطبيقات الواجهة الأمامية أو الجوال. <strong>JSON Web Tokens (JWT)</strong> هي طريقة شائعة وآمنة للقيام بذلك. بدلاً من استخدام الجلسات (Sessions) التي تعتمد على ملفات تعريف الارتباط (Cookies)، تستخدم JWT رموزاً (Tokens) يتم إرسالها مع كل طلب.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">ما هو JWT؟</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    JWT هو سلسلة نصية مشفرة تتكون من ثلاثة أجزاء مفصولة بنقاط:
+                </p>
+                <ol class="list-decimal list-inside text-lg leading-relaxed mb-4">
+                    <li>
+                        <strong>Header (الرأس):</strong> يحتوي على نوع الرمز (JWT) وخوارزمية التشفير (مثل HS256).
+                    </li>
+                    <li>
+                        <strong>Payload (الحمولة):</strong> يحتوي على البيانات التي تريد تخزينها (مثل معرف المستخدم، اسم المستخدم، وقت انتهاء صلاحية الرمز).
+                    </li>
+                    <li>
+                        <strong>Signature (التوقيع):</strong> يُستخدم للتحقق من أن الرمز لم يتم التلاعب به. يتم إنشاؤه باستخدام الرأس، الحمولة، ومفتاح سري خاص بالخادم.
+                    </li>
+                </ol>
+                <p class="mb-4 text-lg leading-relaxed">
+                    عندما يسجل المستخدم الدخول بنجاح، يقوم الخادم بإنشاء JWT وإرساله إلى العميل. يقوم العميل بتخزين هذا الرمز (عادة في التخزين المحلي للمتصفح أو في ذاكرة التطبيق) ويرسله مع كل طلب لاحق في رأس <code>Authorization</code> (عادة كـ <code>Bearer Token</code>).
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">كيف يعمل JWT في Flask (مفهوم):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    عادةً ما تستخدم إضافة مثل <code>Flask-JWT-Extended</code> لتسهيل التعامل مع JWTs في Flask.
+                </p>
+                <ul class="list-disc list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        <strong>التنصيب:</strong> <code>pip install Flask-JWT-Extended</code>
+                    </li>
+                    <li>
+                        <strong>الإعداد:</strong>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-jwt-config')">نسخ الكود</button>
+                            <pre><code id="code-jwt-config"># app.py (جزء من الكود)
+from flask_jwt_extended import JWTManager
+
+app = Flask(__name__)
+app.config["JWT_SECRET_KEY"] = "your-jwt-secret-key" # يجب أن يكون هذا المفتاح قوياً جداً
+jwt = JWTManager(app)
+                            </code></pre>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>إنشاء رمز عند تسجيل الدخول:</strong>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-jwt-create')">نسخ الكود</button>
+                            <pre><code id="code-jwt-create"># app.py (جزء من دالة login)
+from flask_jwt_extended import create_access_token
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+    user = User.query.filter_by(username=username).first()
+
+    if user and user.check_password(password):
+        access_token = create_access_token(identity=user.id) # إنشاء رمز الوصول
+        return jsonify(access_token=access_token)
+    return jsonify({"msg": "اسم المستخدم أو كلمة المرور غير صحيحة"}), 401
+                            </code></pre>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>حماية المسارات باستخدام الرمز:</strong>
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-jwt-protect')">نسخ الكود</button>
+                            <pre><code id="code-jwt-protect"># app.py (جزء من الكود)
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
+@app.route("/api/protected", methods=["GET"])
+@jwt_required() # يتطلب رمز JWT صحيح للوصول
+def protected():
+    current_user_id = get_jwt_identity() # الحصول على هوية المستخدم من الرمز
+    user = User.query.get(current_user_id)
+    return jsonify(logged_in_as=user.username), 200
+                            </code></pre>
+                        </div>
+                    </li>
+                </ul>
+                <p class="mt-4 text-lg leading-relaxed">
+                    <strong>لماذا نستخدم JWT بدلاً من الجلسات؟</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong>عديم الحالة (Stateless):</strong> الخادم لا يحتاج إلى تخزين معلومات الجلسة، مما يجعله مثالياً لتطبيقات الـ API وخدمات Microservices.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong>قابلية التوسع (Scalability):</strong> أسهل في التوسع الأفقي (Horizontal Scaling) حيث يمكن لأي خادم التحقق من الرمز دون الحاجة إلى قاعدة بيانات جلسات مشتركة.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong>دعم تطبيقات الجوال:</strong> تطبيقات الجوال لا تستخدم ملفات تعريف الارتباط، لذا JWT هو الحل الأمثل للمصادقة.
+                    <br>
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> تستخدم JWT بشكل أساسي في بناء APIs التي تخدم تطبيقات الواجهة الأمامية الحديثة (SPA - Single Page Applications) أو تطبيقات الجوال، حيث يتم فصل الواجهة الأمامية عن الخلفية بالكامل.
+                </p>
+            </div>
+
+            <!-- قسم تسجيل الدخول باستخدام OAuth (مثل تسجيل بجوجل) -->
+            <div class="card" id="oauth-login">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 تسجيل الدخول باستخدام OAuth (مفهوم)</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    <strong>OAuth</strong> هو معيار مفتوح للتفويض (Authorization) يسمح للمستخدمين بمنح تطبيقات طرف ثالث الوصول إلى معلوماتهم على خدمة أخرى (مثل Google, Facebook, Twitter) دون الحاجة إلى مشاركة كلمات مرورهم.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">لماذا نستخدم OAuth؟</h3>
+                <ul class="list-disc list-inside text-lg leading-relaxed mb-4">
+                    <li>
+                        <strong>سهولة الاستخدام:</strong> يوفر للمستخدمين طريقة سريعة ومألوفة لتسجيل الدخول دون الحاجة لإنشاء حساب جديد.
+                    </li>
+                    <li>
+                        <strong>الأمان:</strong> لا يتم مشاركة كلمة مرور المستخدم مع تطبيقك.
+                    </li>
+                    <li>
+                        <strong>الوصول إلى الموارد:</strong> يمكنك طلب أذونات للوصول إلى بيانات معينة (مثل البريد الإلكتروني، قائمة الأصدقاء) بعد موافقة المستخدم.
+                    </li>
+                </ul>
+                <h3 class="text-2xl font-medium mt-6 mb-3">كيف يعمل OAuth (تدفق التفويض - Authorization Flow):</h3>
+                <ol class="list-decimal list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        المستخدم ينقر على "تسجيل الدخول باستخدام Google" في تطبيقك.
+                    </li>
+                    <li>
+                        يُعاد توجيه المستخدم إلى صفحة تسجيل الدخول الخاصة بـ Google.
+                    </li>
+                    <li>
+                        المستخدم يسجل الدخول إلى Google ويوافق على منح تطبيقك الأذونات المطلوبة.
+                    </li>
+                    <li>
+                        بعد الموافقة، تُعيد Google توجيه المستخدم إلى تطبيقك مع "رمز تفويض" (Authorization Code).
+                    </li>
+                    <li>
+                        يقوم تطبيقك (الخادم الخلفي) بتبادل هذا الرمز مع Google للحصول على "رمز وصول" (Access Token) وربما "رمز تحديث" (Refresh Token).
+                    </li>
+                    <li>
+                        يستخدم تطبيقك "رمز الوصول" لطلب معلومات المستخدم من Google (مثل البريد الإلكتروني، الاسم).
+                    </li>
+                    <li>
+                        يقوم تطبيقك بإنشاء حساب للمستخدم (إذا لم يكن موجوداً) وتسجيل دخوله، ثم يعيد توجيهه إلى الصفحة الرئيسية.
+                    </li>
+                </ol>
+                <h3 class="text-2xl font-medium mt-6 mb-3">تطبيق OAuth في Flask (مفهوم):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    لتطبيق OAuth في Flask، عادة ما تستخدم مكتبات مثل <code>Authlib</code> أو <code>Flask-Dance</code>. تتطلب هذه العملية:
+                </p>
+                <ul class="list-disc list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        تسجيل تطبيقك لدى مزود OAuth (مثل Google Cloud Console) للحصول على <code>Client ID</code> و <code>Client Secret</code>.
+                    </li>
+                    <li>
+                        تحديد <code>Redirect URI</code> (عنوان URL في تطبيقك الذي ستُعاد توجيه المستخدم إليه بعد المصادقة).
+                    </li>
+                    <li>
+                        استخدام المكتبة المختارة للتعامل مع تدفق OAuth (إرسال المستخدم، تبادل الرموز، جلب بيانات المستخدم).
+                    </li>
+                    <li>
+                        تخزين معلومات المستخدم التي تم الحصول عليها (مثل البريد الإلكتروني) في قاعدة بياناتك وربطها بحساب المستخدم.
+                    </li>
+                </ul>
+                <p class="mt-4 text-lg leading-relaxed">
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> يضيف OAuth مرونة كبيرة في المصادقة ويحسن تجربة المستخدم، خاصة لتطبيقات الويب التي تستهدف قاعدة مستخدمين واسعة.
+                </p>
+            </div>
+
+            <!-- قسم حماية التطبيق (CSRF، Rate Limiting، Login Required) -->
+            <div class="card" id="app-security">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 حماية التطبيق (CSRF، Rate Limiting، Login Required)</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    الأمان هو جانب حاسم في أي تطبيق ويب. Flask، بكونه إطار عمل خفيف، يمنحك المرونة في تطبيق إجراءات الأمان بنفسك أو باستخدام إضافات.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">1. حماية CSRF (Cross-Site Request Forgery):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    هجوم CSRF يحدث عندما يجبر المهاجم متصفح المستخدم على إرسال طلب HTTP غير مرغوب فيه إلى تطبيقك، بينما يكون المستخدم مسجلاً للدخول بالفعل.
+                </p>
+                <p class="mb-4 text-lg leading-relaxed">
+                    <strong>الحماية:</strong> أفضل طريقة للحماية هي استخدام رمز CSRF (CSRF Token). يتم إنشاء هذا الرمز من قبل الخادم وتضمينه في النموذج كحقل مخفي. عند إرسال النموذج، يتحقق الخادم من أن الرمز المرسل يطابق الرمز المخزن في جلسة المستخدم.
+                </p>
+                <p class="mb-4 text-lg leading-relaxed">
+                    عادةً ما تستخدم إضافة <code>Flask-WTF</code> لتسهيل هذه الحماية.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-csrf-example')">نسخ الكود</button>
+                    <pre><code id="code-csrf-example"># تنصيب Flask-WTF
+pip install Flask-WTF
+
+# app.py (جزء من الكود)
+from flask_wtf.csrf import CSRFProtect
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your-very-secret-key' # ضروري لـ CSRFProtect
+csrf = CSRFProtect(app)
+
+# templates/form.html
+&lt;form method="POST"&gt;
+    {{ csrf_token }} &lt;!-- هذا سيضيف حقل إدخال مخفي مع رمز CSRF --&gt;
+    &lt;!-- ... حقول النموذج الأخرى ... --&gt;
+    &lt;button type="submit"&gt;إرسال&lt;/button&gt;
+&lt;/form&gt;
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>المنطق:</strong> <code>CSRFProtect(app)</code> يقوم تلقائياً بالتحقق من رمز CSRF في طلبات POST. إذا لم يكن الرمز موجوداً أو غير صالح، فإنه يرفض الطلب.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">2. Rate Limiting (تحديد معدل الطلبات):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    يمنع هجمات القوة الغاشمة (Brute Force) أو هجمات حجب الخدمة (DoS) عن طريق تقييد عدد الطلبات التي يمكن للمستخدم أو عنوان IP معين إجراؤها خلال فترة زمنية محددة.
+                </p>
+                <p class="mb-4 text-lg leading-relaxed">
+                    تستخدم إضافة <code>Flask-Limiter</code> لتطبيق تحديد المعدل.
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-rate-limiting-example')">نسخ الكود</button>
+                    <pre><code id="code-rate-limiting-example"># تنصيب Flask-Limiter
+pip install Flask-Limiter
+
+# app.py (جزء من الكود)
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app,
+    key_func=get_remote_address, # تحديد عنوان IP كمفتاح لتحديد المعدل
+    default_limits=["200 per day", "50 per hour"] # حدود افتراضية لجميع المسارات
+)
+
+@app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute") # تحديد 5 طلبات في الدقيقة لهذا المسار المحدد
+def login():
+    # ... منطق تسجيل الدخول ...
+    return "Login attempt"
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>المنطق:</strong> إذا تجاوز المستخدم الحد الأقصى من الطلبات في الفترة الزمنية المحددة، فسيتم رفض طلبه.
+                </p>
+
+                <h3 class="text-2xl font-medium mt-6 mb-3">3. <code>login_required</code> (حماية المسارات):</h3>
+                <p class="mb-4 text-lg leading-relaxed">
+                    لقد قمنا بالفعل بتطبيق مزخرف <code>@login_required</code> في المستوى المتوسط. هذا المزخرف يضمن أن المستخدم يجب أن يكون مسجلاً للدخول للوصول إلى مسار معين.
+                </p>
+                <p class="mb-4 text-lg leading-relaxed">
+                    <strong>لماذا نستخدمه؟</strong> لمنع الوصول غير المصرح به إلى أجزاء حساسة من تطبيقك (مثل لوحة التحكم، صفحات الملف الشخصي، أو أي وظيفة تتطلب مصادقة).
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-login-required-example')">نسخ الكود</button>
+                    <pre><code id="code-login-required-example"># app.py (جزء من الكود)
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.', 'info')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/profile')
+@login_required # تطبيق المزخرف لحماية هذا المسار
+def profile():
+    user = User.query.get(session['user_id'])
+    return f"مرحباً بك في ملفك الشخصي يا {user.username}!"
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>المنطق:</strong> هذا المزخرف يتحقق من وجود <code>user_id</code> في الجلسة. إذا لم يكن موجوداً، فإنه يعيد توجيه المستخدم إلى صفحة تسجيل الدخول.
+                </p>
+            </div>
+
+            <!-- قسم رفع التطبيق على الإنترنت (Deployment) -->
+            <div class="card" id="deployment">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 رفع التطبيق على الإنترنت (Deployment)</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    بعد تطوير تطبيق Flask الخاص بك، ستحتاج إلى نشره (Deployment) على خادم ليصبح متاحاً للجمهور عبر الإنترنت. بيئة التطوير التي تستخدمها (<code>app.run(debug=True)</code>) ليست آمنة أو فعالة بما يكفي للإنتاج.
+                </p>
+                <h3 class="text-2xl font-medium mt-6 mb-3">مكونات النشر الشائعة:</h3>
+                <ul class="list-disc list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        <strong>خادم WSGI (Web Server Gateway Interface):</strong> Flask هو تطبيق WSGI. تحتاج إلى خادم WSGI مثل <strong>Gunicorn</strong> أو <strong>uWSGI</strong> لتشغيل تطبيق Flask في الإنتاج. هذا الخادم يقوم بترجمة طلبات HTTP الواردة إلى تطبيق Flask الخاص بك.
+                        <div class="code-block-container">
+                            <button class="copy-button" onclick="copyCode(this, 'code-gunicorn-example')">نسخ الكود</button>
+                            <pre><code id="code-gunicorn-example"># تنصيب Gunicorn
+pip install gunicorn
+
+# تشغيل تطبيق Flask باستخدام Gunicorn (بافتراض أن ملفك app.py واسم كائن التطبيق هو 'app')
+gunicorn -w 4 app:app
+# -w 4: يشغل 4 عمليات عاملة (workers) لمعالجة الطلبات المتوازية
+# app:app: يشير إلى ملف app.py وكائن التطبيق المسمى 'app' داخله
+                            </code></pre>
+                        </div>
+                    </li>
+                    <li>
+                        <strong>خادم ويب أمامي (Reverse Proxy / Front-end Web Server):</strong> مثل <strong>Nginx</strong> أو <strong>Apache</strong>. هذا الخادم يجلس أمام خادم WSGI الخاص بك.
+                        <ul class="list-disc list-inside text-lg leading-relaxed mt-2">
+                            <li>
+                                <strong>وظيفته:</strong>
+                                <ul>
+                                    <li>يخدم الملفات الثابتة (Static Files) مباشرة (CSS, JS, صور) بكفاءة عالية.</li>
+                                    <li>يعيد توجيه طلبات تطبيق الويب إلى خادم WSGI.</li>
+                                    <li>يوفر ميزات مثل SSL/TLS (HTTPS)، توازن التحميل (Load Balancing)، والضغط (Compression).</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>قاعدة البيانات:</strong> في الإنتاج، قد تنتقل من SQLite إلى قواعد بيانات أقوى مثل <strong>PostgreSQL</strong> أو <strong>MySQL</strong>.
+                    </li>
+                    <li>
+                        <strong>Docker (موصى به):</strong> حاويات Docker توفر طريقة لتعبئة تطبيقك وجميع تبعياته في وحدة واحدة قابلة للنشر بسهولة عبر بيئات مختلفة.
+                    </li>
+                    <li>
+                        <strong>منصات السحابة (Cloud Platforms):</strong> خدمات مثل Heroku, AWS Elastic Beanstalk, Google App Engine, DigitalOcean App Platform توفر بيئات جاهزة لنشر تطبيقات Flask وتدير الكثير من البنية التحتية لك.
+                    </li>
+                </ul>
+                <h3 class="text-2xl font-medium mt-6 mb-3">خطوات النشر العامة (مفهوم):</h3>
+                <ol class="list-decimal list-inside text-lg leading-relaxed space-y-3">
+                    <li>
+                        <strong>تحضير التطبيق للإنتاج:</strong>
+                        <ul class="list-disc list-inside text-lg leading-relaxed mt-1">
+                            <li>إزالة <code>debug=True</code> من <code>app.run()</code>.</li>
+                            <li>استخدام مفتاح سري قوي لـ <code>app.secret_key</code>.</li>
+                            <li>تكوين قاعدة بيانات إنتاجية (PostgreSQL/MySQL).</li>
+                            <li>استخدام متغيرات البيئة لإعدادات حساسة (مثل مفتاح API، بيانات اعتماد قاعدة البيانات).</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>تثبيت التبعيات:</strong> إنشاء ملف <code>requirements.txt</code> (باستخدام <code>pip freeze > requirements.txt</code>) وتثبيتها على الخادم.
+                    </li>
+                    <li>
+                        <strong>اختيار خادم WSGI:</strong> تثبيت Gunicorn أو uWSGI.
+                    </li>
+                    <li>
+                        <strong>تكوين خادم الويب الأمامي (Nginx/Apache):</strong> لإعادة توجيه الطلبات وخدمة الملفات الثابتة.
+                    </li>
+                    <li>
+                        <strong>النشر:</strong> نقل ملفات تطبيقك إلى الخادم وتشغيله.
+                    </li>
+                </ol>
+                <p class="mt-4 text-lg leading-relaxed">
+                    <strong>كيف يمكننا استخدام الكود ده أو الجزء ده في الموقع؟</strong> فهم أساسيات النشر ضروري لجعل تطبيقك متاحاً للجمهور. كل منصة سحابة لها خطواتها الخاصة، ولكن المفاهيم الأساسية تظل كما هي.
+                </p>
+            </div>
+
+            <!-- قسم أفضل تنظيم للمجلدات والملفات داخل مشروع Flask -->
+            <div class="card" id="best-folder-structure">
+                <h2 class="text-3xl font-semibold section-title mb-6">🔺 أفضل تنظيم للمجلدات والملفات داخل مشروع Flask</h2>
+                <p class="mb-4 text-lg leading-relaxed">
+                    مع نمو مشروع Flask، يصبح التنظيم الجيد للمجلدات والملفات أمراً بالغ الأهمية للحفاظ على الكود نظيفاً، قابلاً للصيانة، وسهل التوسع. إليك هيكل مشروع موصى به:
+                </p>
+                <div class="code-block-container">
+                    <button class="copy-button" onclick="copyCode(this, 'code-project-structure')">نسخ الكود</button>
+                    <pre><code id="code-project-structure">my_flask_app/
+├── venv/                   # البيئة الافتراضية (لا ترفعها إلى Git)
+├── .flaskenv               # متغيرات البيئة (للتطوير)
+├── .gitignore              # لتجاهل الملفات غير المرغوب فيها في Git
+├── requirements.txt        # قائمة بجميع تبعيات المشروع
+├── run.py                  # ملف تشغيل التطبيق (يستدعي factory function)
+├── config.py               # ملف إعدادات التطبيق
+├── instance/               # مجلد خاص بالإعدادات المحلية/السرية (لا ترفعها إلى Git)
+│   └── config.py           # إعدادات حساسة (مثل مفتاح سري)
+├── project_name/           # مجلد حزمة التطبيق الرئيسية
+│   ├── __init__.py         # يهيئ التطبيق (يحتوي على factory function)
+│   ├── models.py           # تعريف نماذج قاعدة البيانات (SQLAlchemy)
+│   ├── forms.py            # تعريف نماذج الويب (Flask-WTF)
+│   ├── extensions.py       # تهيئة الإضافات (مثل db, jwt)
+│   ├── static/             # الملفات الثابتة (CSS, JS, صور)
+│   │   ├── css/
+│   │   ├── js/
+│   │   └── images/
+│   │       └── uploads/    # مجلد لرفع الملفات (تأكد من إعداده بشكل صحيح)
+│   ├── templates/          # قوالب Jinja2
+│   │   ├── base.html       # قالب أساسي (Base template)
+│   │   ├── auth/           # قوالب المصادقة
+│   │   │   ├── login.html
+│   │   │   └── register.html
+│   │   └── ...
+│   └── blueprints/         # مجلد للـ Blueprints
+│       ├── __init__.py     # لجعله حزمة بايثون
+│       ├── auth/           # Blueprint للمصادقة
+│       │   ├── __init__.py # لجعله حزمة بايثون (اختياري)
+│       │   └── routes.py   # مسارات المصادقة
+│       ├── blog/           # Blueprint للمدونة
+│       │   ├── __init__.py
+│       │   └── routes.py
+│       └── ...
+└── tests/                  # مجلد لاختبارات الوحدة (Unit Tests)
+    └── ...
+                    </code></pre>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    <strong>شرح الهيكل:</strong>
+                    <br>
+                    <strong><code>run.py</code>:</strong> نقطة الدخول لتشغيل التطبيق. يستدعي دالة المصنع (factory function) لإنشاء التطبيق.
+                    <br>
+                    <strong><code>config.py</code>:</strong> يحتوي على إعدادات التطبيق العامة.
+                    <br>
+                    <strong><code>instance/</code>:</strong> مجلد خاص بالإعدادات التي لا يجب أن تكون في التحكم في الإصدار (Version Control)، مثل مفاتيح API السرية أو إعدادات قاعدة البيانات المحلية.
+                    <br>
+                    <strong><code>project_name/</code> (حزمة التطبيق):</strong>
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong><code>__init__.py</code>:</strong> يحتوي على دالة المصنع <code>create_app()</code> التي تقوم بتهيئة التطبيق، تسجيل الـ Blueprints، وربط الإضافات.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong><code>models.py</code>:</strong> جميع تعريفات نماذج قاعدة البيانات (SQLAlchemy).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong><code>forms.py</code>:</strong> تعريف نماذج الويب (إذا كنت تستخدم Flask-WTF).
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong><code>extensions.py</code>:</strong> لتهيئة الإضافات التي تحتاج إلى كائن <code>app</code> (مثل <code>db</code> و <code>jwt</code>) ولكن لا تربطها مباشرة في <code>__init__.py</code> لتجنب الاستيراد الدائري.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong><code>static/</code> و <code>templates/</code>:</strong> المجلدات القياسية للملفات الثابتة والقوالب. يمكن أن تحتوي الـ Blueprints على مجلدات <code>static</code> و <code>templates</code> خاصة بها أيضاً.
+                    <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- <strong><code>blueprints/</code>:</strong> مجلد يحتوي على جميع الـ Blueprints الخاصة بك، كل منها في مجلد فرعي خاص به. كل Blueprint يجب أن يحتوي على ملف <code>routes.py</code> على الأقل لمساراته.
+                    <br>
+                    <strong><code>tests/</code>:</strong> مجلد لاختبارات الوحدة والتكامل.
+                    <br>
+                    <strong>لماذا نستخدم هذا الهيكل؟</strong> يوفر هذا الهيكل فصلًا واضحًا للاهتمامات (Separation of Concerns)، مما يجعل الكود أكثر تنظيمًا، قابلية للاختبار، وقابلية للتوسع. كما أنه يساعد في تجنب مشكلات الاستيراد الدائري.
+                </p>
+            </div>
+
+            <div class="card text-center">
+                <h2 class="text-3xl font-semibold mb-4 text-green-700">🎉 تهانينا! لقد أكملت دليل Flask الشامل!</h2>
+                <p class="text-lg leading-relaxed">
+                    لقد قمت الآن بتغطية جميع المستويات من المبتدئ إلى المتقدم في Flask.
+                </p>
+                <p class="text-lg leading-relaxed mt-4">
+                    هذا الدليل هو أساس قوي لمساعدتك في بناء تطبيقات ويب احترافية باستخدام Flask. تذكر أن الممارسة هي المفتاح! حاول بناء مشاريعك الخاصة وتطبيق المفاهيم التي تعلمتها.
+                </p>
+                <p class="text-lg leading-relaxed mt-4">
+                    إذا كان لديك أي أسئلة أخرى أو كنت ترغب في التعمق أكثر في أي موضوع، فلا تتردد في السؤال.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript لدالة نسخ الكود والشريط الجانبي -->
+    <script>
+        // دالة نسخ الكود
+        function copyCode(buttonElement, codeId) {
+            const codeElement = document.getElementById(cod
