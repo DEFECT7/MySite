@@ -2609,7 +2609,47 @@ gunicorn -w 4 app:app
     </main>
 
     <!-- JavaScript لدالة نسخ الكود والشريط الجانبي -->
-    <script>
-        // دالة نسخ الكود
-        function copyCode(buttonElement, codeId) {
-            const codeElement = document.getElementById(cod
+   <script>
+    function copyCode(button, codeId) {
+        const codeElement = document.getElementById(codeId);
+        if (!codeElement) {
+            console.error("لم يتم العثور على العنصر المطلوب نسخه:", codeId);
+            return;
+        }
+
+        const codeText = codeElement.innerText;
+
+        // انسخ إلى الحافظة
+        navigator.clipboard.writeText(codeText).then(() => {
+            const originalText = button.innerText;
+            button.innerText = "✅ تم النسخ";
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.innerText = originalText;
+                button.disabled = false;
+            }, 1500);
+        }).catch(err => {
+            console.error("فشل النسخ:", err);
+            alert("حدث خطأ أثناء النسخ، يرجى المحاولة مرة أخرى.");
+        });
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+        const scrollLinks = document.querySelectorAll('a.scroll-link[href^="#"]');
+
+        scrollLinks.forEach(link => {
+            link.addEventListener("click", function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute("href").substring(1);
+                const targetElement = document.getElementById(targetId);
+
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                }
+            });
+        });
+    });
+</script>
